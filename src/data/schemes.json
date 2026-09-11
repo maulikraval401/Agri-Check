@@ -1,0 +1,38 @@
+[
+  {
+    "name": "PM-Kisan",
+    "nameGu": "પીએમ-કિસાન",
+    "nameHi": "पीएम-किसान",
+    "benefit": "₹6000/year in 3 installments",
+    "benefitGu": "વર્ષે ₹૬૦૦૦, ૩ હપ્તામાં",
+    "benefitHi": "वर्ष में ₹6000, 3 किस्तों में",
+    "apply": "https://pmkisan.gov.in"
+  },
+  {
+    "name": "Fasal Bima Yojana",
+    "nameGu": "ફસલ બીમા યોજના",
+    "nameHi": "फसल बीमा योजना",
+    "benefit": "Crop insurance at low premium",
+    "benefitGu": "ઓછા પ્રીમિયમમાં પાક વીમો",
+    "benefitHi": "कम प्रीमियम में फसल बीमा",
+    "apply": "https://pmfby.gov.in"
+  },
+  {
+    "name": "Kisan Credit Card",
+    "nameGu": "કિસાન ક્રેડિટ કાર્ડ",
+    "nameHi": "किसान क्रेडिट कार्ड",
+    "benefit": "Low-interest loan up to ₹3 lakh",
+    "benefitGu": "₹૩ લાખ સુધી ઓછા વ્યાજે લોન",
+    "benefitHi": "₹3 लाख तक कम ब्याज पर ऋण",
+    "apply": "https://www.nabard.org"
+  },
+  {
+    "name": "Soil Health Card",
+    "nameGu": "સોઇલ હેલ્થ કાર્ડ",
+    "nameHi": "मृदा स्वास्थ्य कार्ड",
+    "benefit": "Free soil test every 2 years",
+    "benefitGu": "દર ૨ વર્ષે ફ્રી માટી ટેસ્ટ",
+    "benefitHi": "हर 2 साल में मुफ्त मिट्टी टेस्ट",
+    "apply": "https://soilhealth.dac.gov.in"
+  }
+]
