@@ -1,0 +1,73 @@
+{
+  "cotton": {
+    "name": "Cotton",
+    "nameGu": "કપાસ",
+    "nameHi": "कपास",
+    "sowing": "June-July",
+    "harvest": "November-December",
+    "duration": 180,
+    "schedule": [
+      { "day": 0, "task": "Sowing", "taskGu": "વાવેતર", "taskHi": "बुवाई" },
+      { "day": 20, "task": "First irrigation", "taskGu": "પ્રથમ પિયત", "taskHi": "पहली सिंचाई" },
+      { "day": 30, "task": "Urea 50kg/acre", "taskGu": "યુરિયા ૫૦ કિલો/એકર", "taskHi": "यूरिया 50 किग्रा/एकड़" },
+      { "day": 60, "task": "Pest check", "taskGu": "જીવાત તપાસ", "taskHi": "कीट जाँच" },
+      { "day": 90, "task": "Second urea", "taskGu": "બીજું યુરિયા", "taskHi": "दूसरा यूरिया" },
+      { "day": 150, "task": "Harvest prep", "taskGu": "લણણી તૈયારી", "taskHi": "कटाई तैयारी" }
+    ]
+  },
+  "groundnut": {
+    "name": "Groundnut",
+    "nameGu": "મગફળી",
+    "nameHi": "मूंगफली",
+    "sowing": "June-July",
+    "harvest": "October-November",
+    "duration": 120,
+    "schedule": [
+      { "day": 0, "task": "Sowing", "taskGu": "વાવેતર", "taskHi": "बुवाई" },
+      { "day": 25, "task": "Gypsum 100kg/acre", "taskGu": "જીપ્સમ ૧૦૦ કિલો/એકર", "taskHi": "जिप्सम 100 किग्रा/एकड़" },
+      { "day": 45, "task": "Weeding", "taskGu": "નીંદણ", "taskHi": "निराई" },
+      { "day": 90, "task": "Harvest prep", "taskGu": "લણણી તૈયારી", "taskHi": "कटाई तैयारी" }
+    ]
+  },
+  "wheat": {
+    "name": "Wheat",
+    "nameGu": "ઘઉં",
+    "nameHi": "गेहूँ",
+    "sowing": "November-December",
+    "harvest": "March-April",
+    "duration": 130,
+    "schedule": [
+      { "day": 0, "task": "Sowing", "taskGu": "વાવેતર", "taskHi": "बुवाई" },
+      { "day": 25, "task": "First irrigation", "taskGu": "પ્રથમ પિયત", "taskHi": "पहली सिंचाई" },
+      { "day": 45, "task": "Urea 40kg/acre", "taskGu": "યુરિયા ૪૦ કિલો/એકર", "taskHi": "यूरिया 40 किग्रा/एकड़" },
+      { "day": 80, "task": "Second urea", "taskGu": "બીજું યુરિયા", "taskHi": "दूसरा यूरिया" },
+      { "day": 120, "task": "Harvest prep", "taskGu": "લણણી તૈયારી", "taskHi": "कटाई तैयारी" }
+    ]
+  },
+  "bajra": {
+    "name": "Bajra",
+    "nameGu": "બાજરી",
+    "nameHi": "बाजरा",
+    "sowing": "June-July",
+    "harvest": "September-October",
+    "duration": 90,
+    "schedule": [
+      { "day": 0, "task": "Sowing", "taskGu": "વાવેતર", "taskHi": "बुवाई" },
+      { "day": 25, "task": "Urea 30kg/acre", "taskGu": "યુરિયા ૩૦ કિલો/એકર", "taskHi": "यूरिया 30 किग्रा/एकड़" },
+      { "day": 60, "task": "Harvest prep", "taskGu": "લણણી તૈયારી", "taskHi": "कटाई तैयारी" }
+    ]
+  },
+  "cumin": {
+    "name": "Cumin",
+    "nameGu": "જીરું",
+    "nameHi": "जीरा",
+    "sowing": "November-December",
+    "harvest": "February-March",
+    "duration": 100,
+    "schedule": [
+      { "day": 0, "task": "Sowing", "taskGu": "વાવેતર", "taskHi": "बुवाई" },
+      { "day": 30, "task": "First irrigation", "taskGu": "પ્રથમ પિયત", "taskHi": "पहली सिंचाई" },
+      { "day": 60, "task": "Pest check", "taskGu": "જીવાત તપાસ", "taskHi": "कीट जाँच" }
+    ]
+  }
+}
