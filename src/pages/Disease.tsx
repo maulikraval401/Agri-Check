@@ -1,132 +1,149 @@
-import { useEffect, useRef, useState } from 'react';
-import { Bug, Camera, Upload, CircleHelp } from 'lucide-react';
+import { useRef, useState, type ChangeEvent } from 'react';
+import { Upload, Camera, Loader2, Check, AlertTriangle, Info } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
-import {
-  isDiseaseModelAvailable,
-  detectDisease,
-  type DiseasePrediction,
-} from '@/lib/disease-detect';
-
-// ⚠️ No trained plant-disease model exists yet (see src/lib/disease-detect.ts).
-// This page checks for the model on mount and shows a "not available yet"
-// state instead of a fake result when it's missing — same honesty principle
-// as the isDemo flag on the soil test results.
+import { detectDisease, type DiseaseResult } from '@/lib/disease-detect';
 
 export default function DiseasePage() {
-  const { language } = useLanguage();
-  const [modelReady, setModelReady] = useState<boolean | null>(null);
+  const { copy } = useLanguage();
   const [image, setImage] = useState<string | null>(null);
-  const [predictions, setPredictions] = useState<DiseasePrediction[] | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
+  const [result, setResult] = useState<DiseaseResult | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    isDiseaseModelAvailable().then(setModelReady);
-  }, []);
-
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+
     setError(null);
-    setPredictions(null);
+    setResult(null);
+
     const reader = new FileReader();
-    reader.onload = () => setImage(reader.result as string);
+    reader.onload = async () => {
+      const dataUrl = reader.result as string;
+      setImage(dataUrl);
+      setLoading(true);
+
+      try {
+        const r = await detectDisease(dataUrl);
+        setResult(r);
+      } catch (err) {
+        console.error(err);
+        setError('Model load nahi hua. Dobara try karo.');
+      } finally {
+        setLoading(false);
+      }
+    };
     reader.readAsDataURL(file);
   };
 
-  const runDetection = async () => {
-    if (!imgRef.current) return;
-    setAnalyzing(true);
+  const reset = () => {
+    setImage(null);
+    setResult(null);
     setError(null);
-    try {
-      const result = await detectDisease(imgRef.current);
-      setPredictions(result);
-    } catch {
-      setError('Could not analyse this image.');
-    } finally {
-      setAnalyzing(false);
-    }
   };
 
   return (
     <div className="page-enter">
-      <p className="eyebrow">08 / disease detection</p>
-      <h1 className="mt-2 text-3xl font-bold tracking-[-.05em]">
-        Disease Detection
-      </h1>
+      <p className="eyebrow">08 / disease</p>
+      <h1 className="mt-2 text-3xl font-bold tracking-[-.05em]">Disease Detection</h1>
+      <p className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
+        Leaf ki photo lo — disease ya healthy batao
+      </p>
 
-      {modelReady === false && (
-        <div className="mt-6 flex items-start gap-3 rounded-xl border border-[#e6c879] bg-[#fbf0c9] p-4 text-sm text-[#66511b]">
-          <CircleHelp size={19} className="mt-0.5 shrink-0" />
-          <span>
-            <strong>Not available yet.</strong> This feature needs a trained
-            plant-disease model that hasn't been added to the project yet.
-            Check back once it's trained and connected.
-          </span>
+      <div className="mt-4 flex items-start gap-2 rounded-xl border border-[#e6c879] bg-[#fbf0c9] p-3 text-xs text-[#66511b]">
+        <Info size={14} className="mt-0.5 shrink-0" />
+        <span>
+          Works for: Tomato, Potato, Corn, Pepper, Grape, Apple, Cherry, Strawberry. 
+          Baaki crops ke liye trained nahi hai.
+        </span>
+      </div>
+
+      {!image && (
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => cameraRef.current?.click()}
+            className="flex min-h-16 items-center justify-center gap-3 rounded-xl bg-[hsl(var(--primary))] px-4 text-sm font-bold text-[hsl(var(--primary-foreground))]"
+          >
+            <Camera size={20} /> Camera
+          </button>
+          <button
+            type="button"
+            onClick={() => galleryRef.current?.click()}
+            className="flex min-h-16 items-center justify-center gap-3 rounded-xl border border-[hsl(var(--border))] px-4 text-sm font-bold"
+          >
+            <Upload size={20} /> Gallery
+          </button>
         </div>
       )}
 
-      {modelReady === null && (
-        <p className="mt-6 text-sm text-[hsl(var(--muted-foreground))]">
-          Checking availability…
-        </p>
-      )}
+      <input
+        ref={cameraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleFile}
+      />
+      <input
+        ref={galleryRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFile}
+      />
 
-      {modelReady === true && (
-        <div className="mt-6 rounded-[1.35rem] border border-[hsl(var(--card-border))] bg-[hsl(var(--card))] p-5 shadow-[var(--shadow-soft)]">
-          {!image ? (
-            <label className="flex min-h-16 cursor-pointer items-center justify-center gap-3 rounded-xl border border-dashed border-[hsl(var(--border))] text-sm font-bold">
-              <Upload size={20} />
-              Upload a leaf photo
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={handleFile}
-              />
-            </label>
-          ) : (
-            <div>
-              {/* eslint-disable-next-line jsx-a11y/alt-text */}
-              <img
-                ref={imgRef}
-                src={image}
-                alt="Uploaded leaf"
-                className="w-full rounded-xl object-cover"
-                crossOrigin="anonymous"
-              />
-              <button
-                onClick={runDetection}
-                disabled={analyzing}
-                className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[hsl(var(--primary))] text-sm font-bold text-[hsl(var(--primary-foreground))]"
-              >
-                <Bug size={18} />
-                {analyzing ? 'Analysing…' : 'Detect disease'}
-              </button>
+      {image && (
+        <div className="mt-6">
+          <img src={image} alt="Leaf" className="w-full rounded-xl" />
+
+          {loading && (
+            <div className="mt-4 flex items-center gap-2 text-sm">
+              <Loader2 className="animate-spin" size={18} /> Analysing... (pehli baar 5-15 sec)
             </div>
           )}
 
           {error && (
-            <p className="mt-3 text-sm text-[hsl(var(--destructive))]">{error}</p>
+            <p className="mt-4 text-sm text-[hsl(var(--destructive))]">{error}</p>
           )}
 
-          {predictions && (
-            <div className="mt-4 space-y-2">
-              {predictions.map((p) => (
-                <div
-                  key={p.label}
-                  className="flex items-center justify-between rounded-xl bg-[hsl(var(--muted)/.55)] p-3 text-sm"
-                >
-                  <span className="font-semibold">{p.label}</span>
-                  <span>{(p.confidence * 100).toFixed(1)}%</span>
+          {result && (
+            <div
+              className={`mt-4 rounded-[1.35rem] p-5 ${
+                result.isHealthy
+                  ? 'border border-[#a9ccc2] bg-[#deeee9] text-[#28655e]'
+                  : 'border border-[#e5b5a5] bg-[#f9e4dc] text-[#833b2e]'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                {result.isHealthy ? <Check size={22} /> : <AlertTriangle size={22} />}
+                <div className="flex-1">
+                  <p className="text-xs font-bold uppercase opacity-70">
+                    Crop: {result.crop}
+                  </p>
+                  <p className="mt-1 text-lg font-bold">
+                    {result.isHealthy ? 'Healthy ✓' : result.disease}
+                  </p>
+                  <p className="mt-2 text-xs">
+                    Confidence: {(result.confidence * 100).toFixed(1)}%
+                  </p>
                 </div>
-              ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={reset}
+                className="mt-4 min-h-11 w-full rounded-xl border border-current/20 text-sm font-bold"
+              >
+                Try another leaf
+              </button>
             </div>
           )}
         </div>
       )}
     </div>
   );
-          }
+      }
