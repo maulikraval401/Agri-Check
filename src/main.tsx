@@ -3,11 +3,7 @@ import App from './App';
 import { LanguageProvider } from '@/i18n/LanguageContext';
 import './index.css';
 
-createRoot(document.getElementById('root')!, {
-  onCaughtError: (error, errorInfo) => {
-    console.error(error, errorInfo.componentStack);
-  },
-}).render(
+createRoot(document.getElementById('root')!).render(
   <LanguageProvider>
     <App />
   </LanguageProvider>,
