@@ -286,7 +286,7 @@ function BottomNav({ location, onNewTest }: { location: string; onNewTest: () =>
     { href: '/schemes', label: copy.schemes, icon: FileText },
     { href: '/disease', label: 'Disease', icon: Stethoscope },
     { href: '/history', label: copy.history, icon: HistoryIcon },
-
+];
   return (
     <nav className="bottom-nav" aria-label="Primary navigation">
       <div className="bottom-nav-inner flex items-center justify-around gap-1 overflow-x-auto px-2">
