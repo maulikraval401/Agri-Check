@@ -1,77 +1,72 @@
 import * as tf from '@tensorflow/tfjs';
 
-// ⚠️ IMPORTANT: This module expects trained model files at
-// /public/models/plant-disease/model.json (+ weight shards) and
-// /public/models/plant-disease/class_indices.json — neither exists yet.
-// Disease Detection needs its own labelled leaf-image dataset and a
-// separately trained model before this can return real predictions.
-// Until then, every call below will throw, and the UI should catch that
-// and show a "not available yet" state rather than a fake result.
-
 const MODEL_URL = '/models/plant-disease/model.json';
-const CLASS_INDICES_URL = '/models/plant-disease/class_indices.json';
-const INPUT_SIZE = 224;
 
-let modelPromise: Promise<tf.LayersModel> | null = null;
-let classIndicesPromise: Promise<Record<string, string>> | null = null;
+const CLASSES = [
+  'Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
+  'Blueberry___healthy', 'Cherry_(including_sour)___Powdery_mildew', 'Cherry_(including_sour)___healthy',
+  'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot', 'Corn_(maize)___Common_rust_', 'Corn_(maize)___Northern_Leaf_Blight', 'Corn_(maize)___healthy',
+  'Grape___Black_rot', 'Grape___Esca_(Black_Measles)', 'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)', 'Grape___healthy',
+  'Orange___Haunglongbing_(Citrus_greening)', 'Peach___Bacterial_spot', 'Peach___healthy',
+  'Pepper,_bell___Bacterial_spot', 'Pepper,_bell___healthy',
+  'Potato___Early_blight', 'Potato___Late_blight', 'Potato___healthy',
+  'Raspberry___healthy', 'Soybean___healthy', 'Squash___Powdery_mildew',
+  'Strawberry___Leaf_scorch', 'Strawberry___healthy',
+  'Tomato___Bacterial_spot', 'Tomato___Early_blight', 'Tomato___Late_blight', 'Tomato___Leaf_Mold',
+  'Tomato___Septoria_leaf_spot', 'Tomato___Spider_mites Two-spotted_spider_mite', 'Tomato___Target_Spot',
+  'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus', 'Tomato___healthy',
+];
 
-function loadModel(): Promise<tf.LayersModel> {
-  if (!modelPromise) {
-    modelPromise = tf.loadLayersModel(MODEL_URL);
-  }
-  return modelPromise;
+let model: tf.LayersModel | null = null;
+
+async function loadModel(): Promise<tf.LayersModel> {
+  if (model) return model;
+  model = await tf.loadLayersModel(MODEL_URL);
+  return model;
 }
 
-function loadClassIndices(): Promise<Record<string, string>> {
-  if (!classIndicesPromise) {
-    classIndicesPromise = fetch(CLASS_INDICES_URL).then((res) => {
-      if (!res.ok) throw new Error('class_indices.json not found');
-      return res.json();
-    });
-  }
-  return classIndicesPromise;
-}
-
-export type DiseasePrediction = {
-  label: string;
+export type DiseaseResult = {
+  className: string;
+  crop: string;
+  disease: string;
   confidence: number;
+  isHealthy: boolean;
 };
 
-/**
- * Returns true only if both the model and its class index file can be
- * fetched. Call this before showing the Disease Detection UI as "ready",
- * so the page can fall back to a "coming soon" message instead of crashing.
- */
-export async function isDiseaseModelAvailable(): Promise<boolean> {
-  try {
-    await Promise.all([loadModel(), loadClassIndices()]);
-    return true;
-  } catch {
-    return false;
+export async function detectDisease(imageDataUrl: string): Promise<DiseaseResult> {
+  const m = await loadModel();
+
+  const img = new Image();
+  img.src = imageDataUrl;
+  await new Promise((r) => { img.onload = r; });
+
+  const tensor = tf.browser
+    .fromPixels(img)
+    .resizeBilinear([224, 224])
+    .toFloat()
+    .div(255)
+    .expandDims(0);
+
+  const pred = m.predict(tensor) as tf.Tensor;
+  const probs = await pred.data();
+
+  let maxIdx = 0;
+  let maxProb = probs[0];
+  for (let i = 1; i < probs.length; i++) {
+    if (probs[i] > maxProb) { maxProb = probs[i]; maxIdx = i; }
   }
-}
 
-export async function detectDisease(imageElement: HTMLImageElement): Promise<DiseasePrediction[]> {
-  const [model, classIndices] = await Promise.all([loadModel(), loadClassIndices()]);
+  const className = CLASSES[maxIdx] || 'Unknown';
+  const [crop, disease] = className.split('___');
 
-  const tensor = tf.tidy(() => {
-    return tf.browser
-      .fromPixels(imageElement)
-      .resizeBilinear([INPUT_SIZE, INPUT_SIZE])
-      .toFloat()
-      .div(255)
-      .expandDims(0);
-  });
-
-  const output = model.predict(tensor) as tf.Tensor;
-  const scores = await output.data();
   tensor.dispose();
-  output.dispose();
+  pred.dispose();
 
-  const predictions: DiseasePrediction[] = Array.from(scores).map((confidence, index) => ({
-    label: classIndices[String(index)] ?? `class_${index}`,
-    confidence,
-  }));
-
-  return predictions.sort((a, b) => b.confidence - a.confidence).slice(0, 3);
-}
+  return {
+    className,
+    crop: crop.replace(/_/g, ' ').replace(/\(.*?\)/g, '').trim(),
+    disease: disease.replace(/_/g, ' '),
+    confidence: maxProb,
+    isHealthy: disease === 'healthy',
+  };
+      }
