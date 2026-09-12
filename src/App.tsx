@@ -21,6 +21,7 @@ import {
   ScanLine,
   ShieldCheck,
   Sparkles,
+  Stethoscope,
   Trash2,
   TrendingUp,
   Upload,
@@ -34,6 +35,7 @@ import CalculatorPage from '@/pages/Calculator';
 import WeatherPage from '@/pages/Weather';
 import MandiPage from '@/pages/Mandi';
 import SchemesPage from '@/pages/Schemes';
+import DiseasePage from '@/pages/Disease';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Language } from '@/i18n/translations';
@@ -282,8 +284,8 @@ function BottomNav({ location, onNewTest }: { location: string; onNewTest: () =>
     { href: '/weather', label: copy.weather, icon: Cloud },
     { href: '/mandi', label: copy.mandi, icon: TrendingUp },
     { href: '/schemes', label: copy.schemes, icon: FileText },
+    { href: '/disease', label: 'Disease', icon: Stethoscope },
     { href: '/history', label: copy.history, icon: HistoryIcon },
-  ];
 
   return (
     <nav className="bottom-nav" aria-label="Primary navigation">
@@ -1047,6 +1049,9 @@ function AppContent() {
           </Route>
           <Route path="/schemes">
             <SchemesPage />
+            <Route path="/disease">
+  <DiseasePage />
+            </Route>
           </Route>
           <Route path="/">
             {location === '/' && step === 'home' && showChooser ? (
