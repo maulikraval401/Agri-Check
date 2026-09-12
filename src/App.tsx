@@ -1049,9 +1049,9 @@ function AppContent() {
           </Route>
           <Route path="/schemes">
             <SchemesPage />
-            <Route path="/disease">
-  <DiseasePage />
-            </Route>
+          </Route>
+          <Route path="/disease">
+            <DiseasePage />
           </Route>
           <Route path="/">
             {location === '/' && step === 'home' && showChooser ? (
