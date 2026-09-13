@@ -1,3 +1,4 @@
+import { detectCottonViaAPI } from '@/lib/cotton-api';
 import * as tf from '@tensorflow/tfjs';
 
 const MODEL_URL = '/models/plant-disease/model.json';
