@@ -69,7 +69,31 @@ export default function DiseasePage() {
           Baaki crops ke liye trained nahi hai.
         </span>
       </div>
-
+<div className="mt-4 grid grid-cols-2 gap-2">
+  <button
+    type="button"
+    onClick={() => setCropType('tomato')}
+    className={`flex min-h-12 items-center justify-center gap-2 rounded-xl text-sm font-bold ${
+      cropType === 'tomato'
+        ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+        : 'border border-[hsl(var(--border))]'
+    }`}
+  >
+    🍅 Tomato
+  </button>
+  <button
+    type="button"
+    onClick={() => setCropType('cotton')}
+    className={`flex min-h-12 items-center justify-center gap-2 rounded-xl text-sm font-bold ${
+      cropType === 'cotton'
+        ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+        : 'border border-[hsl(var(--border))]'
+    }`}
+  >
+    🌿 Cotton
+  </button>
+</div>
+      
       {!image && (
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <button
