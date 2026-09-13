@@ -201,6 +201,24 @@ export default function DiseasePage() {
                       <p className="mt-2 text-xs">
                         Confidence: {(result.confidence * 100).toFixed(1)}%
                       </p>
+                      <div className="mt-3 space-y-1 rounded-lg bg-white/50 p-2">
+                        <p className="text-[.65rem] font-bold uppercase opacity-70">
+
+                          Top predictions:
+                        </p>
+                        {result.topPredictions.map((p, i) => (
+  
+                  <div key={i} className="flex justify-between text-xs">
+  
+                    <span className="truncate">
+        {p.className.split('___').join(' — ').replace(/_/g, ' ')}
+      </span>
+      <span className="font-bold ml-2">
+        {(p.confidence * 100).toFixed(1)}%
+      </span>
+    </div>
+  ))}
+</div>
                     </div>
                   </div>
 
