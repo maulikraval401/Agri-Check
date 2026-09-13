@@ -33,6 +33,14 @@ export default function MandiPage() {
           Aaj koi data nahi mila.
         </p>
       ) : (
+      {/* Season banner */}
+<div className="mt-4 rounded-xl border border-[#e6c879] bg-[#fbf0c9] p-3 text-xs text-[#66511b]">
+  {language === 'gu'
+    ? '🌾 કપાસ, મગફળી, ઘઉં — ઓક્ટોબર-ડિસેમ્બરમાં આવશે'
+    : language === 'hi'
+      ? '🌾 कपास, मूंगफली, गेहूँ — अक्टूबर-दिसंबर में आएंगे'
+      : '🌾 Cotton, Groundnut, Wheat — arriving Oct-Dec'}
+      </div>
         <div className="mt-6 grid gap-3">
           {prices.map((p, i) => (
             <div
