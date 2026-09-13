@@ -1,5 +1,6 @@
 import { useRef, useState, type ChangeEvent } from 'react';
-import { Upload, Camera, Loader2, Check, AlertTriangle, Info } from 'lucide-react';
+import { Upload, Camera, Loader2, Check, AlertTriangle, Info, HelpCircle } from 'lucide-react';
+import { useLanguage } from '@/i18n/LanguageContext';
 import { detectDisease, type DiseaseResult } from '@/lib/disease-detect';
 
 const SUPPORTED_PLANTS = [
@@ -12,7 +13,6 @@ const SUPPORTED_PLANTS = [
   { emoji: '🍑', name: 'Peach' },
   { emoji: '🫑', name: 'Pepper' },
   { emoji: '🥔', name: 'Potato' },
-  { emoji: '🍇', name: 'Raspberry' },
   { emoji: '🌱', name: 'Soybean' },
   { emoji: '🥒', name: 'Squash' },
   { emoji: '🍓', name: 'Strawberry' },
@@ -20,6 +20,7 @@ const SUPPORTED_PLANTS = [
 ];
 
 export default function DiseasePage() {
+  const { language } = useLanguage();
   const [image, setImage] = useState<string | null>(null);
   const [result, setResult] = useState<DiseaseResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -46,7 +47,11 @@ export default function DiseasePage() {
         setResult(r);
       } catch (err) {
         console.error(err);
-        setError('Model load nahi hua. Dobara try karo.');
+        setError(
+          language === 'gu'
+            ? 'ફોટો વાંચી શકાયો નથી. ફરી પ્રયાસ કરો.'
+            : 'Photo read nahi hua. Dobara try karo.',
+        );
       } finally {
         setLoading(false);
       }
@@ -70,17 +75,20 @@ export default function DiseasePage() {
         Leaf ki photo lo — disease ya healthy batao
       </p>
 
-      <div className="mt-4 flex items-start gap-2 rounded-xl border border-[#e6c879] bg-[#fbf0c9] p-3 text-xs text-[#66511b]">
-        <Info size={14} className="mt-0.5 shrink-0" />
-        <span>
-          Ye feature in plants ke liye trained hai. Baaki plants ke liye
-          results galat ho sakte hain.
-        </span>
+      {/* Photo tips */}
+      <div className="mt-4 rounded-xl border border-[#e6c879] bg-[#fbf0c9] p-3 text-xs text-[#66511b]">
+        <p className="font-bold mb-1">📸 Photo tips:</p>
+        <ul className="ml-4 list-disc space-y-0.5">
+          <li>Sirf 1 leaf lo (fruit/stem nahi)</li>
+          <li>Din ke ujale me lo</li>
+          <li>Leaf poori frame me ho</li>
+          <li>Background plain ho</li>
+        </ul>
       </div>
 
-      {/* Supported Plants Grid */}
+      {/* Supported Plants */}
       <div className="mt-5">
-        <p className="eyebrow mb-3">Supported Plants (14)</p>
+        <p className="eyebrow mb-3">Supported Plants ({SUPPORTED_PLANTS.length})</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
           {SUPPORTED_PLANTS.map((plant) => (
             <div
@@ -136,8 +144,7 @@ export default function DiseasePage() {
 
           {loading && (
             <div className="mt-4 flex items-center gap-2 text-sm">
-              <Loader2 className="animate-spin" size={18} /> Analysing... (pehli
-              baar 5-15 sec)
+              <Loader2 className="animate-spin" size={18} /> Analysing...
             </div>
           )}
 
@@ -145,44 +152,71 @@ export default function DiseasePage() {
             <p className="mt-4 text-sm text-[hsl(var(--destructive))]">{error}</p>
           )}
 
-          {result && (
-            <div
-              className={`mt-4 rounded-[1.35rem] p-5 ${
-                result.isHealthy
-                  ? 'border border-[#a9ccc2] bg-[#deeee9] text-[#28655e]'
-                  : 'border border-[#e5b5a5] bg-[#f9e4dc] text-[#833b2e]'
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                {result.isHealthy ? (
-                  <Check size={22} />
-                ) : (
-                  <AlertTriangle size={22} />
-                )}
-                <div className="flex-1">
-                  <p className="text-xs font-bold uppercase opacity-70">
-                    Crop: {result.crop}
-                  </p>
-                  <p className="mt-1 text-lg font-bold">
-                    {result.isHealthy ? 'Healthy ✓' : result.disease}
-                  </p>
-                  <p className="mt-2 text-xs">
-                    Confidence: {(result.confidence * 100).toFixed(1)}%
-                  </p>
+          {result && !loading && (
+            <>
+              {!result.isConfident ? (
+                <div className="mt-4 rounded-[1.35rem] border border-[#e6c879] bg-[#fbf0c9] p-5 text-[#66511b]">
+                  <div className="flex items-start gap-3">
+                    <HelpCircle size={22} className="mt-0.5 shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-bold">Photo clear nahi hai</p>
+                      <p className="mt-1 text-sm">
+                        Model {Math.round(result.confidence * 100)}% sure hai.
+                        Kripya ek saaf leaf ki photo lo.
+                      </p>
+                      <p className="mt-2 text-xs opacity-80">
+                        Best prediction: {result.crop} — {result.disease}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={reset}
+                    className="mt-4 min-h-11 w-full rounded-xl border border-current/20 text-sm font-bold"
+                  >
+                    Try another leaf
+                  </button>
                 </div>
-              </div>
+              ) : (
+                <div
+                  className={`mt-4 rounded-[1.35rem] p-5 ${
+                    result.isHealthy
+                      ? 'border border-[#a9ccc2] bg-[#deeee9] text-[#28655e]'
+                      : 'border border-[#e5b5a5] bg-[#f9e4dc] text-[#833b2e]'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    {result.isHealthy ? (
+                      <Check size={22} />
+                    ) : (
+                      <AlertTriangle size={22} />
+                    )}
+                    <div className="flex-1">
+                      <p className="text-xs font-bold uppercase opacity-70">
+                        {result.crop}
+                      </p>
+                      <p className="mt-1 text-lg font-bold">
+                        {result.isHealthy ? 'Healthy ✓' : result.disease}
+                      </p>
+                      <p className="mt-2 text-xs">
+                        Confidence: {(result.confidence * 100).toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
 
-              <button
-                type="button"
-                onClick={reset}
-                className="mt-4 min-h-11 w-full rounded-xl border border-current/20 text-sm font-bold"
-              >
-                Try another leaf
-              </button>
-            </div>
+                  <button
+                    type="button"
+                    onClick={reset}
+                    className="mt-4 min-h-11 w-full rounded-xl border border-current/20 text-sm font-bold"
+                  >
+                    Try another leaf
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
     </div>
   );
-}
+             }
