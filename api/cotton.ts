@@ -23,13 +23,20 @@ export default async function handler(req: Request) {
 
     const data = await roboflowRes.json();
 
-    return new Response(JSON.stringify(data), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+    // Return full response including status for debugging
+    return new Response(
+      JSON.stringify({
+        status: roboflowRes.status,
+        data,
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
       },
-    });
+    );
   } catch (err: any) {
     return new Response(
       JSON.stringify({ error: err.message || 'Proxy error' }),
