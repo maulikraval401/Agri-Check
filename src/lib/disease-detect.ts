@@ -39,6 +39,7 @@ export type DiseaseResult = {
   confidence: number;
   isHealthy: boolean;
   isConfident: boolean;
+  topPredictions: { className: string; confidence: number }[];
 };
 
 export async function detectDisease(imageDataUrl: string): Promise<DiseaseResult> {
@@ -48,21 +49,30 @@ export async function detectDisease(imageDataUrl: string): Promise<DiseaseResult
   img.src = imageDataUrl;
   await new Promise((r) => { img.onload = r; });
 
+  // CORRECT PREPROCESSING for MobileNetV1: [-1, 1] range
   const tensor = tf.browser
     .fromPixels(img)
     .resizeBilinear([224, 224])
     .toFloat()
-    .div(255)
+    .div(127.5)
+    .sub(1)
     .expandDims(0);
 
   const pred = m.predict(tensor) as tf.Tensor;
   const probs = await pred.data();
 
-  let maxIdx = 0;
-  let maxProb = probs[0];
-  for (let i = 1; i < probs.length; i++) {
-    if (probs[i] > maxProb) { maxProb = probs[i]; maxIdx = i; }
-  }
+  // Get top 3 predictions
+  const indexed = Array.from(probs).map((conf, idx) => ({ idx, conf }));
+  indexed.sort((a, b) => b.conf - a.conf);
+  const top3 = indexed.slice(0, 3);
+
+  const topPredictions = top3.map(({ idx, conf }) => ({
+    className: CLASSES[idx] || 'Unknown',
+    confidence: conf,
+  }));
+
+  const maxIdx = top3[0].idx;
+  const maxProb = top3[0].conf;
 
   const className = CLASSES[maxIdx] || 'Unknown';
   const [crop, disease] = className.split('___');
@@ -70,8 +80,8 @@ export async function detectDisease(imageDataUrl: string): Promise<DiseaseResult
   tensor.dispose();
   pred.dispose();
 
-  // 60% threshold — kam confidence pe "not sure" bolo
-  const isConfident = maxProb >= 0.6;
+  // 65% threshold for confidence
+  const isConfident = maxProb >= 0.65;
 
   return {
     className,
@@ -80,5 +90,6 @@ export async function detectDisease(imageDataUrl: string): Promise<DiseaseResult
     confidence: maxProb,
     isHealthy: disease === 'healthy',
     isConfident,
+    topPredictions,
   };
 }
