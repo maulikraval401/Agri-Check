@@ -11,8 +11,6 @@ export type CottonResult = {
 export async function detectCottonViaAPI(
   imageDataUrl: string,
 ): Promise<CottonResult> {
-  const base64 = imageDataUrl.split(',')[1];
-
   const response = await fetch(WORKFLOW_URL, {
     method: 'POST',
     headers: {
@@ -21,89 +19,62 @@ export async function detectCottonViaAPI(
     },
     body: JSON.stringify({
       inputs: {
-        image: { type: 'base64', value: base64 },
+        image: { type: 'base64', value: imageDataUrl },
       },
     }),
   });
 
-  if (!response.ok) {
-    const errText = await response.text();
-    console.error('Roboflow error:', response.status, errText);
-    throw new Error(`API error: ${response.status}`);
-  }
-
   const result = await response.json();
-  console.log('Roboflow result:', result);
 
-  // Workflow response me predictions dhoondh
-  const predictions = extractPredictions(result);
+  // Debug log — Chrome console me dikhega
+  console.log('Roboflow full response:', JSON.stringify(result, null, 2));
 
-  return predictions;
+  // Result me predictions dhoondh
+  return parseResult(result);
 }
 
-function extractPredictions(result: any): CottonResult {
-  const outputs = result.outputs || result;
+function parseResult(result: any): CottonResult {
+  // Try all possible paths where predictions could be
+  const paths = [
+    result?.outputs?.[0]?.predictions,
+    result?.outputs?.[0]?.classes,
+    result?.outputs?.[0],
+    result?.predictions,
+    result?.classes,
+    result,
+  ];
 
-  // Outputs array hai
-  if (Array.isArray(outputs) && outputs.length > 0) {
-    const first = outputs[0];
+  for (const p of paths) {
+    if (!p) continue;
 
-    // Classifications object
-    if (first?.predictions) {
-      return pickTop(first.predictions);
+    // Object of {classname: confidence}
+    if (typeof p === 'object' && !Array.isArray(p)) {
+      const entries = Object.entries(p).filter(
+        ([k, v]) => typeof v === 'number' && k !== 'confidence',
+      );
+      if (entries.length > 0) {
+        const top = entries.reduce((a, b) => (a[1] > b[1] ? a : b));
+        return {
+          className: String(top[0]).replace(/_/g, ' '),
+          confidence: top[1] as number,
+        };
+      }
     }
 
-    // Direct classes object
-    if (first?.classes && typeof first.classes === 'object') {
-      return pickTop(first.classes);
+    // Array of {class, confidence}
+    if (Array.isArray(p)) {
+      const best = p.reduce(
+        (a: any, b: any) => (b.confidence > a.confidence ? b : a),
+        p[0],
+      );
+      if (best?.class || best?.class_name) {
+        return {
+          className: (best.class || best.class_name).replace(/_/g, ' '),
+          confidence: best.confidence || 0,
+        };
+      }
     }
-
-    // Array of predictions
-    if (Array.isArray(first)) {
-      return pickTopFromArray(first);
-    }
-  }
-
-  // Direct response me predictions
-  if (result.predictions) {
-    return pickTop(result.predictions);
   }
 
   return { className: 'Unknown', confidence: 0 };
 }
-
-function pickTop(classes: Record<string, number>): CottonResult {
-  let topClass = 'Unknown';
-  let topConf = 0;
-
-  Object.entries(classes).forEach(([cls, conf]) => {
-    const c = typeof conf === 'number' ? conf : 0;
-    if (c > topConf) {
-      topConf = c;
-      topClass = cls;
-    }
-  });
-
-  return {
-    className: topClass.replace(/_/g, ' '),
-    confidence: topConf,
-  };
-}
-
-function pickTopFromArray(items: any[]): CottonResult {
-  let topClass = 'Unknown';
-  let topConf = 0;
-
-  items.forEach((item) => {
-    const conf = item.confidence || 0;
-    if (conf > topConf) {
-      topConf = conf;
-      topClass = item.class || item.class_name || 'Unknown';
-    }
-  });
-
-  return {
-    className: topClass.replace(/_/g, ' '),
-    confidence: topConf,
-  };
-    }
