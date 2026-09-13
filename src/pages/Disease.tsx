@@ -2,13 +2,14 @@ import { useRef, useState, type ChangeEvent } from 'react';
 import { Upload, Camera, Loader2, Check, AlertTriangle, Info } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { detectDisease, type DiseaseResult } from '@/lib/disease-detect';
-
+import { detectCottonViaAPI } from '@/lib/cotton-api';
 export default function DiseasePage() {
   const { copy } = useLanguage();
   const [image, setImage] = useState<string | null>(null);
   const [result, setResult] = useState<DiseaseResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cropType, setCropType] = useState<'tomato' | 'cotton'>('tomato');
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
 
@@ -27,10 +28,18 @@ export default function DiseasePage() {
       setLoading(true);
 
       try {
-        const r = await detectDisease(dataUrl);
-        setResult(r);
-      } catch (err) {
-        console.error(err);
+  const r =
+    cropType === 'cotton'
+      ? await detectCottonViaAPI(dataUrl).then((c) => ({
+          className: c.className,
+          crop: 'Cotton',
+          disease: c.className,
+          confidence: c.confidence,
+          isHealthy: false,
+        }))
+      : await detectDisease(dataUrl);
+  setResult(r);
+} catch (err) {
         setError('Model load nahi hua. Dobara try karo.');
       } finally {
         setLoading(false);
