@@ -18,11 +18,18 @@ const CLASSES = [
 ];
 
 let model: tf.LayersModel | null = null;
+let loadPromise: Promise<tf.LayersModel> | null = null;
 
 async function loadModel(): Promise<tf.LayersModel> {
   if (model) return model;
-  model = await tf.loadLayersModel(MODEL_URL);
-  return model;
+  if (loadPromise) return loadPromise;
+
+  loadPromise = tf.loadLayersModel(MODEL_URL).then((m) => {
+    model = m;
+    return m;
+  });
+
+  return loadPromise;
 }
 
 export type DiseaseResult = {
@@ -31,6 +38,7 @@ export type DiseaseResult = {
   disease: string;
   confidence: number;
   isHealthy: boolean;
+  isConfident: boolean;
 };
 
 export async function detectDisease(imageDataUrl: string): Promise<DiseaseResult> {
@@ -62,11 +70,15 @@ export async function detectDisease(imageDataUrl: string): Promise<DiseaseResult
   tensor.dispose();
   pred.dispose();
 
+  // 60% threshold — kam confidence pe "not sure" bolo
+  const isConfident = maxProb >= 0.6;
+
   return {
     className,
     crop: crop.replace(/_/g, ' ').replace(/\(.*?\)/g, '').trim(),
-    disease: disease.replace(/_/g, ' '),
+    disease: disease.replace(/_/g, ' ').replace(/_\s*$/, '').trim(),
     confidence: maxProb,
     isHealthy: disease === 'healthy',
+    isConfident,
   };
-      }
+}
