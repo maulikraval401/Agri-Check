@@ -2,33 +2,32 @@ export const config = { runtime: 'edge' };
 
 export default async function handler(req: Request) {
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response('Method not allowed', { status: 405 });
   }
 
   try {
     const { image } = await req.json();
-    const base64 = image.split(',')[1];
 
     const roboflowRes = await fetch(
-      'https://classify.roboflow.com/cotton-leaf-health-1-resnet18-t1/1?api_key=MQCqehaGR5aX3HHVtN1Z',
+      'https://serverless.roboflow.com/maulik-raval/workflows/cotton-leaf-health-vcotton-leaf-health-1-resnet18-t1-logic',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: base64,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer MQCqehaGR5aX3HHVtN1Z',
+        },
+        body: JSON.stringify({
+          inputs: {
+            image: { type: 'base64', value: image },
+          },
+        }),
       },
     );
 
-    const data = await roboflowRes.json();
+    const text = await roboflowRes.text();
 
-    // Return full response including status for debugging
     return new Response(
-      JSON.stringify({
-        status: roboflowRes.status,
-        data,
-      }),
+      JSON.stringify({ status: roboflowRes.status, raw: text }),
       {
         status: 200,
         headers: {
@@ -38,12 +37,9 @@ export default async function handler(req: Request) {
       },
     );
   } catch (err: any) {
-    return new Response(
-      JSON.stringify({ error: err.message || 'Proxy error' }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      },
-    );
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
