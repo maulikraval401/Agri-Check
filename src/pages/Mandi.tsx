@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { fetchMandiPrices, type MandiPrice } from '@/lib/mandi';
+import { translateCommodity } from '@/lib/commodity-translations';
 
 export default function MandiPage() {
-  const { copy } = useLanguage();
+  const { copy, language } = useLanguage();
   const [prices, setPrices] = useState<MandiPrice[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,14 +19,18 @@ export default function MandiPage() {
       <p className="eyebrow">06 / mandi</p>
       <h1 className="mt-2 text-3xl font-bold tracking-[-.05em]">{copy.mandi}</h1>
       <p className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
-        Gujarat ke aaj ke mandi bhav
+        {language === 'gu'
+          ? 'ગુજરાતના આજના મંડી ભાવ'
+          : language === 'hi'
+            ? 'गुजरात के आज के मंडी भाव'
+            : 'Gujarat ke aaj ke mandi bhav'}
       </p>
 
       {loading ? (
         <p className="mt-6 text-sm">Loading...</p>
       ) : prices.length === 0 ? (
         <p className="mt-6 text-sm text-[hsl(var(--muted-foreground))]">
-          Aaj koi data nahi mila. Kal dobara try karo.
+          Aaj koi data nahi mila.
         </p>
       ) : (
         <div className="mt-6 grid gap-3">
@@ -37,7 +42,9 @@ export default function MandiPage() {
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-bold">{p.commodity}</h3>
+                    <h3 className="font-bold">
+                      {translateCommodity(p.commodity, language)}
+                    </h3>
                     <span
                       className={`rounded-md px-2 py-0.5 text-[.6rem] font-bold ${
                         p.category === 'crop'
@@ -45,7 +52,7 @@ export default function MandiPage() {
                           : 'bg-orange-100 text-orange-800'
                       }`}
                     >
-                      {p.category === 'crop' ? '🌾 Crop' : '🥬 Veg'}
+                      {p.category === 'crop' ? '🌾' : '🥬'}
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">
@@ -63,4 +70,4 @@ export default function MandiPage() {
       )}
     </div>
   );
-                        }
+}
