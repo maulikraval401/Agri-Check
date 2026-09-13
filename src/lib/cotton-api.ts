@@ -25,6 +25,7 @@ export async function detectCottonViaAPI(
 }
 
 function parseRoboflowResponse(data: any): CottonResult {
+  console.log('RAW RESPONSE:', JSON.stringify(data));
   // Try every possible structure
 
   // 1. predictions as object {class: confidence}
