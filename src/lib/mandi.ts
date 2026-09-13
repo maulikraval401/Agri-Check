@@ -32,24 +32,46 @@ function getCategory(commodity: string): 'crop' | 'vegetable' | 'other' {
   return 'other';
 }
 
+// Ek commodity ke liye alag API call
+async function fetchByCommodity(commodity: string): Promise<any[]> {
+  try {
+    const url = `https://api.data.gov.in/resource/${RESOURCE_ID}?api-key=${API_KEY}&format=json&limit=50&filters[state.keyword]=Gujarat&filters[commodity]=${encodeURIComponent(commodity)}`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.records || [];
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchMandiPrices(): Promise<MandiPrice[]> {
   try {
-    const url = `https://api.data.gov.in/resource/${RESOURCE_ID}?api-key=${API_KEY}&format=json&limit=500&filters[state.keyword]=Gujarat`;
-
+    // Pehle saara data fetch kar
+    const url = `https://api.data.gov.in/resource/${RESOURCE_ID}?api-key=${API_KEY}&format=json&limit=1000&filters[state.keyword]=Gujarat`;
     const res = await fetch(url);
-    if (!res.ok) {
-      console.error('Mandi API failed:', res.status);
-      return getFallbackData();
+
+    let records: any[] = [];
+    if (res.ok) {
+      const data = await res.json();
+      records = data.records || [];
     }
 
-    const data = await res.json();
-    const records = data.records || [];
+    // Target crops ke liye alag calls
+    const cropResults = await Promise.all(
+      ['Cotton', 'Groundnut', 'Wheat', 'Bajra', 'Cumin'].map(fetchByCommodity),
+    );
 
-    const filtered = records.filter((r: any) => {
+    // Sabhi records ko combine kar
+    const allRecords = [...records, ...cropResults.flat()];
+
+    // Sirf crops aur vegetables
+    const filtered = allRecords.filter((r: any) => {
       const cat = getCategory(r.commodity || '');
       return cat === 'crop' || cat === 'vegetable';
     });
 
+    // Unique by commodity
     const seen = new Set<string>();
     const unique: any[] = [];
     filtered.forEach((r: any) => {
@@ -59,14 +81,17 @@ export async function fetchMandiPrices(): Promise<MandiPrice[]> {
       }
     });
 
-    const sorted = unique.sort((a, b) => {
+    // Sort: crops first
+    unique.sort((a, b) => {
       const catA = getCategory(a.commodity);
       const catB = getCategory(b.commodity);
       if (catA === catB) return 0;
       return catA === 'crop' ? -1 : 1;
     });
 
-    return sorted.slice(0, 30).map((r: any) => ({
+    if (unique.length === 0) return getFallbackData();
+
+    return unique.slice(0, 40).map((r: any) => ({
       market: r.market || r.district || 'Unknown',
       commodity: r.commodity || 'Unknown',
       minPrice: parseInt(r.min_price) || 0,
@@ -88,8 +113,5 @@ function getFallbackData(): MandiPrice[] {
     { market: 'Ahmedabad', commodity: 'Wheat', minPrice: 2200, maxPrice: 2500, modalPrice: 2350, date: 'Today', category: 'crop' },
     { market: 'Junagadh', commodity: 'Bajra', minPrice: 1800, maxPrice: 2100, modalPrice: 1950, date: 'Today', category: 'crop' },
     { market: 'Mehsana', commodity: 'Cumin', minPrice: 18000, maxPrice: 22000, modalPrice: 20000, date: 'Today', category: 'crop' },
-    { market: 'Ahmedabad', commodity: 'Tomato', minPrice: 1000, maxPrice: 2500, modalPrice: 1750, date: 'Today', category: 'vegetable' },
-    { market: 'Rajkot', commodity: 'Potato', minPrice: 700, maxPrice: 1300, modalPrice: 1000, date: 'Today', category: 'vegetable' },
-    { market: 'Anand', commodity: 'Onion', minPrice: 1500, maxPrice: 2800, modalPrice: 2200, date: 'Today', category: 'vegetable' },
   ];
-                                    }
+}
