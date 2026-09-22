@@ -2,7 +2,7 @@ import { useRef, useState, type ChangeEvent } from 'react';
 import { Upload, Camera, Loader2, Check, AlertTriangle, Info, HelpCircle } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { detectDisease, type DiseaseResult } from '@/lib/disease-detect';
-
+import { detectCottonViaAPI } from '@/lib/cotton-api'; 
 const SUPPORTED_PLANTS = [
   { emoji: '🍎', name: 'Apple' },
   { emoji: '🫐', name: 'Blueberry' },
@@ -25,6 +25,7 @@ export default function DiseasePage() {
   const [result, setResult] = useState<DiseaseResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cropType, setCropType] = useState<'plant' | 'cotton'>('plant');
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
 
@@ -43,9 +44,24 @@ export default function DiseasePage() {
       setLoading(true);
 
       try {
-        const r = await detectDisease(dataUrl);
-        setResult(r);
-      } catch (err) {
+  if (cropType === 'cotton') {
+    const cottonResult = await detectCottonViaAPI(dataUrl);
+    setResult({
+      className: cottonResult.className,
+      crop: 'Cotton',
+      disease: cottonResult.className,
+      confidence: cottonResult.confidence,
+      isHealthy: false,
+      isConfident: cottonResult.confidence >= 0.6,
+      topPredictions: [
+        { className: cottonResult.className, confidence: cottonResult.confidence },
+      ],
+    });
+  } else {
+    const r = await detectDisease(dataUrl);
+    setResult(r);
+  }
+} catch (err) {
         console.error(err);
         setError(
           language === 'gu'
@@ -86,6 +102,31 @@ export default function DiseasePage() {
         </ul>
       </div>
 
+{/* Crop Selector */}
+<div className="mt-4 grid grid-cols-2 gap-2">
+  <button
+    type="button"
+    onClick={() => setCropType('plant')}
+    className={`flex min-h-12 items-center justify-center gap-2 rounded-xl text-sm font-bold ${
+      cropType === 'plant'
+        ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+        : 'border border-[hsl(var(--border))]'
+    }`}
+  >
+    🍅 Plants
+  </button>
+  <button
+    type="button"
+    onClick={() => setCropType('cotton')}
+    className={`flex min-h-12 items-center justify-center gap-2 rounded-xl text-sm font-bold ${
+      cropType === 'cotton'
+        ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+        : 'border border-[hsl(var(--border))]'
+    }`}
+  >
+    🌿 Cotton
+  </button>
+</div>
       {/* Supported Plants */}
       <div className="mt-5">
         <p className="eyebrow mb-3">Supported Plants ({SUPPORTED_PLANTS.length})</p>
