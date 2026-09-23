@@ -11,8 +11,8 @@ export const LANGUAGES: { code: Language; label: string; native: string }[] = [
 
 export const translations = {
   en: {
-    appName: 'Soil Health Checker',
-    appSub: 'A calm read for the field',
+    appName: Agri Check',
+    appSub: 'Smart soil test for farmers',
     home: 'New test',
     history: 'History',
     calendar: 'Calendar',
@@ -112,8 +112,8 @@ export const translations = {
     calculatorListen: 'Listen',
   },
   gu: {
-    appName: 'સોઇલ હેલ્થ ચેકર',
-    appSub: 'ખેતર માટે સરળ વાંચન',
+    appName: 'Agri Check',
+    appSub: 'ખેડૂતો માટે સ્માર્ટ માટી ટેસ્ટ',
     home: 'નવો ટેસ્ટ',
     history: 'ઇતિહાસ',
     calendar: 'કેલેન્ડર',
@@ -213,8 +213,8 @@ export const translations = {
     calculatorListen: 'સાંભળો',
   },
   hi: {
-    appName: 'मृदा स्वास्थ्य जांच',
-    appSub: 'खेत के लिए सरल जानकारी',
+    appName:'Agri Check',
+    appSub: 'किसानों के लिए स्मार्ट मिट्टी टेस्ट',
     home: 'नया टेस्ट',
     history: 'इतिहास',
     calendar: 'कैलेंडर',
@@ -314,8 +314,8 @@ export const translations = {
     calculatorListen: 'सुनें',
   },
   mr: {
-    appName: 'माती आरोग्य तपासणी',
-    appSub: 'शेतासाठी सोपी माहिती',
+    appName: 'Agri Check',
+    appSub:  'शेतकऱ्यांसाठी स्मार्ट माती चाचणी',
     home: 'नवीन चाचणी',
     history: 'इतिहास',
     calendar: 'कॅलेंडर',
@@ -415,8 +415,8 @@ export const translations = {
     calculatorListen: 'ऐका',
   },
   pa: {
-    appName: 'ਮਿੱਟੀ ਸਿਹਤ ਜਾਂਚ',
-    appSub: 'ਖੇਤ ਲਈ ਸੌਖੀ ਜਾਣਕਾਰੀ',
+    appName: 'Agri Check',
+    appSub: 'ਕਿਸਾਨਾਂ ਲਈ ਸਮਾਰਟ ਮਿੱਟੀ ਟੈਸਟ',
     home: 'ਨਵਾਂ ਟੈਸਟ',
     history: 'ਇਤਿਹਾਸ',
     calendar: 'ਕੈਲੰਡਰ',
@@ -516,8 +516,8 @@ export const translations = {
     calculatorListen: 'ਸੁਣੋ',
   },
   ta: {
-    appName: 'மண் ஆரோக்கிய சோதனை',
-    appSub: 'வயலுக்கான எளிய தகவல்',
+    appName: 'Agri Check',
+    appSub:  'விவசாயிகளுக்கான ஸ்மார்ட் மண் சோதனை',
     home: 'புதிய சோதனை',
     history: 'வரலாறு',
     calendar: 'நாட்காட்டி',
