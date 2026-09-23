@@ -11,7 +11,7 @@ export const LANGUAGES: { code: Language; label: string; native: string }[] = [
 
 export const translations = {
   en: {
-    appName: Agri Check',
+    appName: 'Agri Check',
     appSub: 'Smart soil test for farmers',
     home: 'New test',
     history: 'History',
