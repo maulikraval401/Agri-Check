@@ -778,7 +778,29 @@ function HomePage({
       <p className="mt-7 flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
         <ShieldCheck size={15} /> {copy.privacy}
       </p>
-
+<button
+  type="button"
+  onClick={async () => {
+    const shareData = {
+      title: 'Agri Check',
+      text: 'Free soil testing app for Indian farmers — N/P/K/pH, disease detection, mandi prices, weather, and more.',
+      url: 'https://agri-check.vercel.app',
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch {
+        // User cancelled
+      }
+    } else {
+      navigator.clipboard.writeText('https://agri-check.vercel.app');
+      alert('Link copied!');
+    }
+  }}
+  className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-4 text-sm font-bold"
+>
+  📤 Share Agri Check
+</button>
       <p className="mt-3 text-xs leading-5 text-[hsl(var(--muted-foreground))]">⚠️ {copy.disclaimer}</p>
       <p className="mt-2 text-xs leading-5 text-[hsl(var(--muted-foreground))]">🧤 {copy.safety}</p>
 
