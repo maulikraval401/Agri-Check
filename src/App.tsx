@@ -711,7 +711,24 @@ function HomePage({
           aria-hidden="true"
         />
       </section>
-
+{/* My Farm Setup Card */}
+<Link
+  href="/my-farm"
+  className="mt-6 flex items-center justify-between gap-4 rounded-[1.35rem] border border-[hsl(var(--primary)/.3)] bg-[hsl(var(--primary)/.08)] p-4 no-underline"
+>
+  <div className="flex items-center gap-3">
+    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xl">
+      🌾
+    </span>
+    <div>
+      <p className="font-bold text-[hsl(var(--foreground))]">My Farm</p>
+      <p className="mt-0.5 text-xs text-[hsl(var(--muted-foreground))]">
+        Apni khet set karo — roz personalized advice pao
+      </p>
+    </div>
+  </div>
+  <ArrowRight size={18} className="shrink-0 text-[hsl(var(--primary))]" />
+</Link>
       <div className="mt-7 grid gap-6 lg:grid-cols-[1.1fr_.9fr]">
         <section>
           <div className="flex items-end justify-between">
