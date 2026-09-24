@@ -608,7 +608,33 @@ function ResultView({
           })}
         </div>
       </section>
+{/* My Farm Setup Card */}
+<Link
+  href="/my-farm"
+  className="mt-6 flex items-center justify-between gap-4 rounded-[1.35rem] border border-[hsl(var(--primary)/.3)] bg-[hsl(var(--primary)/.08)] p-4 no-underline"
+>
+  <div className="flex items-center gap-3">
+    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[hsl(var(--primary))] text-xl text-[hsl(var(--primary-foreground))]">
+      🌾
+    </span>
+    <div>
+      <p className="font-bold text-[hsl(var(--foreground))]">My Farm</p>
+      <p className="mt-0.5 text-xs text-[hsl(var(--muted-foreground))]">
+        Apni khet set karo — roz personalized advice pao
+      </p>
+    </div>
+  </div>
+  <ArrowRight size={18} className="shrink-0 text-[hsl(var(--primary))]" />
+</Link>
 
+{farmExists && (
+  <Link
+    href="/dashboard"
+    className="mt-3 flex min-h-14 items-center justify-center gap-2 rounded-[1.35rem] bg-[hsl(var(--secondary))] text-sm font-bold text-[hsl(var(--secondary-foreground))] no-underline"
+  >
+    🌅 Open My Dashboard <ArrowRight size={18} />
+  </Link>
+)}
       <section className="mt-7 rounded-[1.35rem] border border-[hsl(var(--border))] bg-[hsl(var(--secondary)/.2)] p-5 sm:p-6">
         <div className="flex items-start gap-3">
           <div className="mt-0.5 text-[hsl(var(--primary))]">
@@ -681,10 +707,6 @@ function HomePage({
   if (step === 'results' && currentTest)
     return <ResultView test={currentTest} saved={saved} onSave={onSave} onNew={onNew} />;
 // Show farm dashboard if profile exists
-const farmProfile = readFarm();
-if (farmProfile && !step || step === 'home') {
-  return <FarmDashboard />;
-             }
   return (
     <div className="page-enter">
       <section className="field-grain relative overflow-hidden rounded-[1.8rem] bg-[hsl(var(--primary))] px-5 py-8 text-[hsl(var(--primary-foreground))] shadow-[var(--shadow-lift)] sm:px-9 sm:py-10">
@@ -717,24 +739,7 @@ if (farmProfile && !step || step === 'home') {
           aria-hidden="true"
         />
       </section>
-{/* My Farm Setup Card */}
-<Link
-  href="/my-farm"
-  className="mt-6 flex items-center justify-between gap-4 rounded-[1.35rem] border border-[hsl(var(--primary)/.3)] bg-[hsl(var(--primary)/.08)] p-4 no-underline"
->
-  <div className="flex items-center gap-3">
-    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xl">
-      🌾
-    </span>
-    <div>
-      <p className="font-bold text-[hsl(var(--foreground))]">My Farm</p>
-      <p className="mt-0.5 text-xs text-[hsl(var(--muted-foreground))]">
-        Apni khet set karo — roz personalized advice pao
-      </p>
-    </div>
-  </div>
-  <ArrowRight size={18} className="shrink-0 text-[hsl(var(--primary))]" />
-</Link>
+
       <div className="mt-7 grid gap-6 lg:grid-cols-[1.1fr_.9fr]">
         <section>
           <div className="flex items-end justify-between">
@@ -1103,13 +1108,14 @@ function AppContent() {
           <Route path="/my-farm">
             <MyFarm />
           </Route>
+          <Route path="/dashboard">
+              <FarmDashboard />
+            </Route>
           <Route path="/cotton-debug">
             <CottonDebug />
           </Route>
           <Route path="/">
-            <Route path="/dashboard">
-              <FarmDashboard />
-            </Route>
+            
             {location === '/' && step === 'home' && showChooser ? (
               <PhotoChooser onFile={handleFile} error={error} onBack={start} />
             ) : (
