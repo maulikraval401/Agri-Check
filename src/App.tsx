@@ -1,3 +1,5 @@
+import FarmDashboard from '@/pages/FarmDashboard';
+import { readFarm } from '@/lib/farm-storage';
 import MyFarm from '@/pages/MyFarm';
 import CottonDebug from '@/pages/CottonDebug';
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
@@ -678,7 +680,11 @@ function HomePage({
   if (step === 'analyzing') return <AnalysisStep />;
   if (step === 'results' && currentTest)
     return <ResultView test={currentTest} saved={saved} onSave={onSave} onNew={onNew} />;
-
+// Show farm dashboard if profile exists
+const farmProfile = readFarm();
+if (farmProfile && !step || step === 'home') {
+  return <FarmDashboard />;
+             }
   return (
     <div className="page-enter">
       <section className="field-grain relative overflow-hidden rounded-[1.8rem] bg-[hsl(var(--primary))] px-5 py-8 text-[hsl(var(--primary-foreground))] shadow-[var(--shadow-lift)] sm:px-9 sm:py-10">
@@ -1101,6 +1107,9 @@ function AppContent() {
             <CottonDebug />
           </Route>
           <Route path="/">
+            <Route path="/dashboard">
+              <FarmDashboard />
+            </Route>
             {location === '/' && step === 'home' && showChooser ? (
               <PhotoChooser onFile={handleFile} error={error} onBack={start} />
             ) : (
