@@ -282,6 +282,7 @@ function Header() {
 function BottomNav({ location, onNewTest }: { location: string; onNewTest: () => void }) {
   const { copy } = useLanguage();
   const items = [
+    { href: '/my-farm', label: 'My Farm', icon: Leaf },
     { href: '/', label: copy.home, icon: ScanLine, isButton: true },
     { href: '/calendar', label: copy.calendar, icon: CalendarIcon },
     { href: '/calculator', label: copy.calculator, icon: CalcIcon },
