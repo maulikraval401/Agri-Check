@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'wouter';
+import { useLocation } from 'wouter';
 import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import {
@@ -17,7 +18,7 @@ import {
 export default function MyFarm() {
   const { language } = useLanguage();
   const existing = readFarm();
-
+  const [, setLocation] = useLocation();
   const [name, setName] = useState(existing?.name || '');
   const [village, setVillage] = useState(existing?.village || '');
   const [crops, setCrops] = useState<string[]>(existing?.crops || []);
@@ -63,6 +64,9 @@ export default function MyFarm() {
     const ok = writeFarm(profile);
     if (ok) {
       setSaved(true);
+      setTimeout(() => {
+  setLocation('/dashboard');
+      }, 800);
       setTimeout(() => setSaved(false), 2000);
     } else {
       alert('Save nahi hua. Dobara try karo.');
