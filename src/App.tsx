@@ -700,7 +700,7 @@ function HomePage({
   onNew: () => void;
 }) {
   const { copy, language } = useLanguage();
-
+const farmExists = !!readFarm();
   if (step === 'preview' && image)
     return <PreviewStep image={image} onAnalyze={onAnalyze} onRetake={onRetake} />;
   if (step === 'analyzing') return <AnalysisStep />;
