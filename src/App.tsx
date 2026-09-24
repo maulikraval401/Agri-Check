@@ -1,3 +1,4 @@
+import MyFarm from '@/pages/MyFarm';
 import CottonDebug from '@/pages/CottonDebug';
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -1075,6 +1076,9 @@ function AppContent() {
           </Route>
           <Route path="/disease">
             <DiseasePage />
+          </Route>
+          <Route path="/my-farm">
+            <MyFarm />
           </Route>
           <Route path="/cotton-debug">
             <CottonDebug />
