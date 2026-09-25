@@ -1,6 +1,8 @@
 import FarmDashboard from '@/pages/FarmDashboard';
 import { readFarm } from '@/lib/farm-storage';
 import MyFarm from '@/pages/MyFarm';
+import CropLibrary from '@/pages/CropLibrary';
+import CropDetail from '@/pages/CropDetail';
 import CottonDebug from '@/pages/CottonDebug';
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -25,6 +27,7 @@ import {
   ScanLine,
   ShieldCheck,
   Sparkles,
+  Sprout,
   Stethoscope,
   Trash2,
   TrendingUp,
@@ -283,6 +286,7 @@ function BottomNav({ location, onNewTest }: { location: string; onNewTest: () =>
   const { copy } = useLanguage();
   const items = [
     { href: '/my-farm', label: 'My Farm', icon: Leaf },
+    { href: '/crops', label: 'Crops', icon: Sprout },
     { href: '/', label: copy.home, icon: ScanLine, isButton: true },
     { href: '/calendar', label: copy.calendar, icon: CalendarIcon },
     { href: '/calculator', label: copy.calculator, icon: CalcIcon },
@@ -1108,6 +1112,12 @@ function AppContent() {
           </Route>
           <Route path="/my-farm">
             <MyFarm />
+          </Route>
+          <Route path="/crops">
+            <CropLibrary />
+          </Route>
+          <Route path="/crops/:id">
+            <CropDetail />
           </Route>
           <Route path="/dashboard">
               <FarmDashboard />
