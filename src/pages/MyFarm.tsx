@@ -216,6 +216,15 @@ export default function MyFarm() {
 
       {/* Actions */}
       <div className="mt-6 grid gap-3">
+      {existing && (
+  <Link
+    href="/dashboard"
+    className="flex min-h-14 items-center justify-center gap-2 rounded-xl bg-[hsl(var(--secondary))] text-sm font-bold text-[hsl(var(--secondary-foreground))] no-underline"
+  >
+    🌅 View My Dashboard
+  </Link>
+)}
+        
         <button
           type="button"
           onClick={handleSave}
