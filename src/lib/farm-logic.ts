@@ -7,69 +7,76 @@ export function getCropAge(sowingDate: string): number {
   return Math.max(0, diff);
 }
 
-export function getCropStage(crop: string, ageDays: number): string {
-  const stages: Record<string, { day: number; task: string; taskGu: string }[]> = {
-    cotton: [
-      { day: 0, task: 'Sowing', taskGu: 'વાવેતર' },
-      { day: 20, task: 'First irrigation', taskGu: 'પ્રથમ પિયત' },
-      { day: 30, task: 'Urea 50kg/acre', taskGu: 'યુરિયા ૫૦ કિલો/એકર' },
-      { day: 60, task: 'Pest check', taskGu: 'જીવાત તપાસ' },
-      { day: 90, task: 'Second urea', taskGu: 'બીજું યુરિયા' },
-      { day: 150, task: 'Harvest prep', taskGu: 'લણણી તૈયારી' },
-    ],
-    groundnut: [
-      { day: 0, task: 'Sowing', taskGu: 'વાવેતર' },
-      { day: 25, task: 'Gypsum 100kg/acre', taskGu: 'જીપ્સમ ૧૦૦ કિલો' },
-      { day: 45, task: 'Weeding', taskGu: 'નીંદણ' },
-      { day: 90, task: 'Harvest prep', taskGu: 'લણણી તૈયારી' },
-    ],
-    wheat: [
-      { day: 0, task: 'Sowing', taskGu: 'વાવેતર' },
-      { day: 25, task: 'First irrigation', taskGu: 'પ્રથમ પિયત' },
-      { day: 45, task: 'Urea 40kg/acre', taskGu: 'યુરિયા ૪૦ કિલો' },
-      { day: 80, task: 'Second urea', taskGu: 'બીજું યુરિયા' },
-    ],
-    bajra: [
-      { day: 0, task: 'Sowing', taskGu: 'વાવેતર' },
-      { day: 25, task: 'Urea 30kg/acre', taskGu: 'યુરિયા ૩૦ કિલો' },
-      { day: 60, task: 'Harvest prep', taskGu: 'લણણી તૈયારી' },
-    ],
-    cumin: [
-      { day: 0, task: 'Sowing', taskGu: 'વાવેતર' },
-      { day: 30, task: 'First irrigation', taskGu: 'પ્રથમ પિયત' },
-      { day: 60, task: 'Pest check', taskGu: 'જીવાત તપાસ' },
-    ],
-  };
+const STAGES: Record<string, { day: number; key: string }[]> = {
+  cotton: [
+    { day: 0, key: 'taskSowing' },
+    { day: 20, key: 'taskFirstIrrigation' },
+    { day: 30, key: 'taskUrea50' },
+    { day: 60, key: 'taskPestCheck' },
+    { day: 90, key: 'taskSecondUrea' },
+    { day: 150, key: 'taskHarvestPrep' },
+  ],
+  groundnut: [
+    { day: 0, key: 'taskSowing' },
+    { day: 25, key: 'taskGypsum' },
+    { day: 45, key: 'taskWeeding' },
+    { day: 90, key: 'taskHarvestPrep' },
+  ],
+  wheat: [
+    { day: 0, key: 'taskSowing' },
+    { day: 25, key: 'taskFirstIrrigation' },
+    { day: 45, key: 'taskUrea40' },
+    { day: 80, key: 'taskSecondUrea' },
+    { day: 120, key: 'taskHarvestPrep' },
+  ],
+  bajra: [
+    { day: 0, key: 'taskSowing' },
+    { day: 25, key: 'taskUrea30' },
+    { day: 60, key: 'taskHarvestPrep' },
+  ],
+  cumin: [
+    { day: 0, key: 'taskSowing' },
+    { day: 30, key: 'taskFirstIrrigation' },
+    { day: 60, key: 'taskPestCheck' },
+  ],
+};
 
-  const cropStages = stages[crop] || [];
-  let current = cropStages[0];
+export type TaskInfo = {
+  currentKey: string;
+  nextKey: string | null;
+  nextDay: number | null;
+};
 
-  for (const stage of cropStages) {
+export function getCropTask(crop: string, ageDays: number): TaskInfo {
+  const stages = STAGES[crop] || STAGES.cotton;
+  let current = stages[0];
+
+  for (const stage of stages) {
     if (ageDays >= stage.day) current = stage;
     else break;
   }
 
-  const next = cropStages.find((s) => s.day > ageDays);
+  const next = stages.find((s) => s.day > ageDays);
 
-  return next
-    ? `Aaj: ${current.task} · Next: ${next.task} (Day ${next.day})`
-    : current?.task || 'Crop growing well';
+  return {
+    currentKey: current.key,
+    nextKey: next?.key ?? null,
+    nextDay: next?.day ?? null,
+  };
 }
 
-export function getIrrigationAdvice(
+export type IrrigationAdviceKey = 'rainTomorrow' | 'irrigationToday' | 'irrigationTomorrow';
+
+export function getIrrigationAdviceKey(
   rainTomorrow: number,
   cropAge: number,
-): { advice: string; emoji: string } {
-  if (rainTomorrow > 5) {
-    return { advice: 'Kal barish — irrigation skip karo', emoji: '🌧️' };
-  }
-  if (cropAge > 0 && cropAge % 7 === 0) {
-    return { advice: 'Aaj irrigation ka din', emoji: '💧' };
-  }
-  return { advice: 'Irrigation kal', emoji: '⏰' };
+): IrrigationAdviceKey {
+  if (rainTomorrow > 5) return 'rainTomorrow';
+  if (cropAge > 0 && cropAge % 7 === 0) return 'irrigationToday';
+  return 'irrigationTomorrow';
 }
 
-export function getEstimatedProfit(
+export function getEstimatedRevenue(
   crop: string,
   acres: number,
   mandiPrice: number,
@@ -83,5 +90,24 @@ export function getEstimatedProfit(
   };
   const yieldPerAcre = yields[crop] || 8;
   const totalQuintal = yieldPerAcre * acres;
-  return totalQuintal * mandiPrice;
+  return Math.round(totalQuintal * mandiPrice);
 }
+
+// Approximate cost per acre (seeds + fertilizer + labour + pesticide)
+const COST_PER_ACRE: Record<string, number> = {
+  cotton: 12000,
+  groundnut: 10000,
+  wheat: 8000,
+  bajra: 6000,
+  cumin: 15000,
+};
+
+export function getEstimatedProfit(
+  crop: string,
+  acres: number,
+  mandiPrice: number,
+): number {
+  const revenue = getEstimatedRevenue(crop, acres, mandiPrice);
+  const cost = (COST_PER_ACRE[crop] || 10000) * acres;
+  return Math.max(0, revenue - cost);
+    }
