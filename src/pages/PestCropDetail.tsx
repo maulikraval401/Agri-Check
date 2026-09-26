@@ -1,3 +1,4 @@
+import { Share2 } from 'lucide-react';
 import { Link, useRoute } from 'wouter';
 import { ArrowLeft, Bug, Leaf, Syringe, Shield } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -67,17 +68,37 @@ export default function PestCropDetail() {
 
       {/* Header */}
       <div className="mt-4 flex items-center gap-4 rounded-[1.5rem] bg-[hsl(var(--primary))] p-5 text-[hsl(var(--primary-foreground))]">
-        <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-[hsl(var(--secondary)/.3)] text-4xl">
-          {crop.emoji}
-        </span>
-        <div>
-          <p className="eyebrow text-[hsl(var(--secondary))]">{t.diseasesOf}</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-[-.03em]">{cropName}</h1>
-          <p className="mt-1 text-xs opacity-70">
-            {crop.diseases.length} {language === 'gu' ? 'રોગો' : 'diseases'}
-          </p>
-        </div>
-      </div>
+  <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-[hsl(var(--secondary)/.3)] text-4xl">
+    {crop.emoji}
+  </span>
+  <div className="flex-1">
+    <p className="eyebrow text-[hsl(var(--secondary))]">{t.diseasesOf}</p>
+    <h1 className="mt-1 text-2xl font-bold tracking-[-.03em]">{cropName}</h1>
+    <p className="mt-1 text-xs opacity-70">
+      {crop.diseases.length} {language === 'gu' ? 'રોગો' : 'diseases'}
+    </p>
+  </div>
+  <button
+    type="button"
+    onClick={async () => {
+      const shareData = {
+        title: `Agri Check — ${cropName}`,
+        text: `${cropName} ke rog aur unka ilaaj — Agri Check app pe`,
+        url: `https://agri-check.vercel.app/pests/${cropId}`,
+      };
+      if (navigator.share) {
+        try { await navigator.share(shareData); } catch { /* cancel */ }
+      } else {
+        navigator.clipboard.writeText(shareData.url);
+        alert('Link copied!');
+      }
+    }}
+    className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[hsl(var(--secondary)/.3)]"
+    aria-label="Share"
+  >
+    <Share2 size={20} />
+  </button>
+</div>
 
       {/* Diseases */}
       <div className="mt-6 grid gap-4">
