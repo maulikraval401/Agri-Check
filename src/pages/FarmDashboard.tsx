@@ -233,45 +233,7 @@ export default function FarmDashboard() {
   const [mandiPrice, setMandiPrice] = useState<number>(0);
   const [soilTest, setSoilTest] = useState<any>(null);
 
-  useEffect(() => {
-  if (!farm) return;
-
-  let cancelled = false;
-(async () => {
-  try {
-    let lat: number;
-    let lon: number;
-
-    // Try saved city from Weather page first
-    try {
-      const saved = localStorage.getItem('agri-check-selected-city');
-      if (saved) {
-        const city = JSON.parse(saved);
-        lat = city.lat;
-        lon = city.lon;
-      } else {
-        const loc = await getCurrentLocation();
-        lat = loc.lat;
-        lon = loc.lon;
-      }
-    } catch {
-      const loc = await getCurrentLocation();
-      lat = loc.lat;
-      lon = loc.lon;
-    }
-
-    const w = await fetchWeather(lat, lon);
-    if (!cancelled) {
-      setWeather({
-        temp: w.current.temp,
-        rain: w.daily[0]?.rain ?? 0,
-      });
-    }
-  } catch (err) {
-    console.error('Weather error:', err);
-  }
-})();
-    useEffect(() => {
+ useEffect(() => {
   if (!farm) return;
 
   let cancelled = false;
