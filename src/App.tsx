@@ -3,6 +3,8 @@ import { readFarm } from '@/lib/farm-storage';
 import MyFarm from '@/pages/MyFarm';
 import CropLibrary from '@/pages/CropLibrary';
 import CropDetail from '@/pages/CropDetail';
+import PestGallery from '@/pages/PestGallery';
+import PestCropDetail from '@/pages/PestCropDetail';
 import CottonDebug from '@/pages/CottonDebug';
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -1118,6 +1120,12 @@ function AppContent() {
           </Route>
           <Route path="/crops/:id">
             <CropDetail />
+          </Route>
+          <Route path="/pests">
+            <PestGallery />
+          </Route>
+          <Route path="/pests/:id">
+            <PestCropDetail />
           </Route>
           <Route path="/dashboard">
               <FarmDashboard />
