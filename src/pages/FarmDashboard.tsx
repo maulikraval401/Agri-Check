@@ -235,11 +235,15 @@ export default function FarmDashboard() {
 
   useEffect(() => {
     if (!farm) return;
-
-    getCurrentLocation()
-      .then((loc) => fetchWeather(loc.lat, loc.lon))
-      .then((w) => setWeather({ temp: w.current.temp, rain: w.daily[0]?.rain ?? 0 }))
-      .catch(() => undefined);
+Promise.race([
+  getCurrentLocation(),
+  new Promise<{ lat: number; lon: number }>((resolve) =>
+    setTimeout(() => resolve({ lat: 22.2587, lon: 71.1924 }), 5000),
+  ),
+])
+  .then((loc) => fetchWeather(loc.lat, loc.lon))
+  .then((w) => setWeather({ temp: w.current.temp, rain: w.daily[0]?.rain ?? 0 }))
+  .catch(() => undefined);
 
     const mainCrop = farm.crops[0];
     fetchMandiPrices()
@@ -308,7 +312,7 @@ export default function FarmDashboard() {
               {t.todayWeather}
             </p>
             <p className="mt-1 text-lg font-bold">
-              {weather ? `${Math.round(weather.temp)}°C` : t.loading}
+              {weather ? `${Math.round(weather.temp)}°C` : '—'}
             </p>
             {weather && (
               <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">
