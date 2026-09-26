@@ -234,19 +234,106 @@ export default function FarmDashboard() {
   const [soilTest, setSoilTest] = useState<any>(null);
 
   useEffect(() => {
-    if (!farm) return;
-Promise.race([
-  getCurrentLocation(),
-  new Promise<{ lat: number; lon: number }>((resolve) =>
-    setTimeout(() => resolve({ lat: 22.2587, lon: 71.1924 }), 5000),
-  ),
-])
-  .then((loc) => fetchWeather(loc.lat, loc.lon))
-  .then((w) => setWeather({ temp: w.current.temp, rain: w.daily[0]?.rain ?? 0 }))
-  .catch(() => undefined);
+  if (!farm) return;
 
-    const mainCrop = farm.crops[0];
-    fetchMandiPrices()
+  let cancelled = false;
+(async () => {
+  try {
+    let lat: number;
+    let lon: number;
+
+    // Try saved city from Weather page first
+    try {
+      const saved = localStorage.getItem('agri-check-selected-city');
+      if (saved) {
+        const city = JSON.parse(saved);
+        lat = city.lat;
+        lon = city.lon;
+      } else {
+        const loc = await getCurrentLocation();
+        lat = loc.lat;
+        lon = loc.lon;
+      }
+    } catch {
+      const loc = await getCurrentLocation();
+      lat = loc.lat;
+      lon = loc.lon;
+    }
+
+    const w = await fetchWeather(lat, lon);
+    if (!cancelled) {
+      setWeather({
+        temp: w.current.temp,
+        rain: w.daily[0]?.rain ?? 0,
+      });
+    }
+  } catch (err) {
+    console.error('Weather error:', err);
+  }
+})();
+    useEffect(() => {
+  if (!farm) return;
+
+  let cancelled = false;
+
+  (async () => {
+    try {
+      let lat: number;
+      let lon: number;
+
+      try {
+        const saved = localStorage.getItem('agri-check-selected-city');
+        if (saved) {
+          const city = JSON.parse(saved);
+          lat = city.lat;
+          lon = city.lon;
+        } else {
+          const loc = await getCurrentLocation();
+          lat = loc.lat;
+          lon = loc.lon;
+        }
+      } catch {
+        const loc = await getCurrentLocation();
+        lat = loc.lat;
+        lon = loc.lon;
+      }
+
+      const w = await fetchWeather(lat, lon);
+      if (!cancelled) {
+        setWeather({
+          temp: w.current.temp,
+          rain: w.daily[0]?.rain ?? 0,
+        });
+      }
+    } catch (err) {
+      console.error('Weather error:', err);
+    }
+  })();
+
+  const mainCrop = farm.crops[0];
+  fetchMandiPrices()
+    .then((prices) => {
+      if (cancelled) return;
+      const match = prices.find((p) =>
+        p.commodity.toLowerCase().includes(mainCrop.toLowerCase()),
+      );
+      if (match) setMandiPrice(match.modalPrice);
+    })
+    .catch(() => undefined);
+
+  try {
+    const history = JSON.parse(
+      localStorage.getItem('soil-health-checker-history') || '[]',
+    );
+    if (history[0] && !cancelled) setSoilTest(history[0]);
+  } catch {
+    // silent
+  }
+
+  return () => {
+    cancelled = true;
+  };
+}, [farm]);
       .then((prices) => {
         const match = prices.find((p) =>
           p.commodity.toLowerCase().includes(mainCrop.toLowerCase()),
