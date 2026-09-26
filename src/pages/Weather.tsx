@@ -11,16 +11,22 @@ export default function WeatherPage() {
 
   useEffect(() => {
     (async () => {
-      try {
-        const loc = await getCurrentLocation();
-        const w = await fetchWeather(loc.lat, loc.lon);
-        setData(w);
-      } catch {
-        setError(copy.weatherError);
-      } finally {
-        setLoading(false);
-      }
-    })();
+  try {
+    // Timeout with fallback location (Gujarat center)
+    const loc = await Promise.race([
+      getCurrentLocation(),
+      new Promise<{ lat: number; lon: number }>((resolve) =>
+        setTimeout(() => resolve({ lat: 22.2587, lon: 71.1924 }), 5000),
+      ),
+    ]);
+    const w = await fetchWeather(loc.lat, loc.lon);
+    setData(w);
+  } catch (err) {
+    setError('Weather fetch failed. Location on karo.');
+  } finally {
+    setLoading(false);
+  }
+})();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
