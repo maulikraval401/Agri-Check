@@ -1,8 +1,9 @@
 import { useRef, useState, type ChangeEvent } from 'react';
-import { Upload, Camera, Loader2, Check, AlertTriangle, Info, HelpCircle } from 'lucide-react';
+import { Upload, Camera, Loader2, Check, AlertTriangle, Info, HelpCircle, Bug, ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { detectDisease, type DiseaseResult } from '@/lib/disease-detect';
 import { detectCottonViaAPI } from '@/lib/cotton-api'; 
+import { Link } from 'wouter';
 const SUPPORTED_PLANTS = [
   { emoji: '🍎', name: 'Apple' },
   { emoji: '🫐', name: 'Blueberry' },
@@ -101,7 +102,25 @@ export default function DiseasePage() {
           <li>Background plain ho</li>
         </ul>
       </div>
-
+{/* Browse Diseases Button */}
+<Link
+  href="/pests"
+  className="mt-4 flex items-center gap-3 rounded-[1.35rem] border border-[hsl(var(--primary)/.3)] bg-[hsl(var(--primary)/.08)] p-4 no-underline"
+>
+  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]">
+    <Bug size={22} />
+  </span>
+  <div className="min-w-0 flex-1">
+    <p className="font-bold text-[hsl(var(--foreground))]">
+      Browse Diseases
+    </p>
+    <p className="mt-0.5 text-xs text-[hsl(var(--muted-foreground))]">
+      Crop-wise disease list — symptoms, treatment, prevention
+    </p>
+  </div>
+  <ArrowRight size={18} className="shrink-0 text-[hsl(var(--primary))]" />
+</Link>
+      
 {/* Crop Selector */}
 <div className="mt-4 grid grid-cols-2 gap-2">
   <button
