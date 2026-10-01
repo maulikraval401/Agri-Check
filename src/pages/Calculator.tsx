@@ -1,3 +1,5 @@
+import { Link } from 'wouter';
+import { ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 import { Calculator as CalcIcon } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -118,6 +120,52 @@ export default function CalculatorPage() {
           🔊 {copy.calculatorListen}
         </button>
       </div>
+      
+{/* Other Calculators */}
+<div className="mt-6">
+  <p className="eyebrow mb-3">More Tools</p>
+  <div className="grid gap-3">
+    <Link
+      href="/dose-calculator"
+      className="flex items-center justify-between gap-3 rounded-[1.35rem] border border-[hsl(var(--card-border))] bg-[hsl(var(--card))] p-4 no-underline"
+    >
+      <div className="flex items-center gap-3">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[hsl(var(--secondary)/.35)] text-[hsl(var(--primary))] text-xl">
+          🧪
+        </span>
+        <div>
+          <p className="font-bold text-[hsl(var(--foreground))]">
+            Pesticide Dose Calculator
+          </p>
+          <p className="mt-0.5 text-xs text-[hsl(var(--muted-foreground))]">
+            Kitna ml kitne litre pani me
+          </p>
+        </div>
+      </div>
+      <ArrowRight size={18} className="shrink-0 text-[hsl(var(--primary))]" />
+    </Link>
+
+    <Link
+      href="/cost-calculator"
+      className="flex items-center justify-between gap-3 rounded-[1.35rem] border border-[hsl(var(--card-border))] bg-[hsl(var(--card))] p-4 no-underline"
+    >
+      <div className="flex items-center gap-3">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[hsl(var(--secondary)/.35)] text-[hsl(var(--primary))] text-xl">
+          💰
+        </span>
+        <div>
+          <p className="font-bold text-[hsl(à var(--foreground))]">
+            Cost & Profit Calculator
+          </p>
+          <p className="mt-0.5 text-xs text-[hsl(var(--muted-foreground))]">
+            Kitna kharcha, kitna munafa
+          </p>
+        </div>
+      </div>
+      <ArrowRight size={18} className="shrink-0 text-[hsl(var(--primary))]" />
+    </Link>
+  </div>
+</div>
     </div>
   );
 }
