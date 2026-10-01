@@ -5,6 +5,8 @@ import CropLibrary from '@/pages/CropLibrary';
 import CropDetail from '@/pages/CropDetail';
 import PestGallery from '@/pages/PestGallery';
 import PestCropDetail from '@/pages/PestCropDetail';
+import DoseCalculator from '@/pages/DoseCalculator';
+import CostCalculator from '@/pages/CostCalculator';
 import CottonDebug from '@/pages/CottonDebug';
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -1126,6 +1128,12 @@ function AppContent() {
           </Route>
           <Route path="/pests/:id">
             <PestCropDetail />
+          </Route>
+          <Route path="/dose-calculator">
+            <DoseCalculator />
+          </Route>
+          <Route path="/cost-calculator">
+            <CostCalculator />
           </Route>
           <Route path="/dashboard">
               <FarmDashboard />
