@@ -147,4 +147,78 @@
       { "day": 95, "task": "Harvest prep", "taskGu": "લણણી તૈયારી", "taskHi": "कटाई तैयारी" }
     ]
   }
-      }
+      },
+  "sugarcane": {
+    "name": "Sugarcane",
+    "nameGu": "શેરડી",
+    "nameHi": "गन्ना",
+    "sowing": "Oct-Nov / Feb-Mar",
+    "harvest": "12-18 months",
+    "duration": 365,
+    "schedule": [
+      { "day": 0, "task": "Setts planting", "taskGu": "કલમ વાવેતર", "taskHi": "कलम बुवाई" },
+      { "day": 30, "task": "First irrigation", "taskGu": "પ્રથમ પિયત", "taskHi": "पहली सिंचाई" },
+      { "day": 60, "task": "First urea 100kg/acre", "taskGu": "પ્રથમ યુરિયા ૧૦૦ કિલો", "taskHi": "पहला यूरिया 100 किग्रा" },
+      { "day": 120, "task": "Earthing up", "taskGu": "માટી ચઢાવો", "taskHi": "मिट्टी चढ़ाओ" },
+      { "day": 180, "task": "Second urea", "taskGu": "બીજું યુરિયા", "taskHi": "दूसरा यूरिया" },
+      { "day": 300, "task": "Harvest prep", "taskGu": "લણણી તૈયારી", "taskHi": "कटाई तैयारी" }
+    ]
+  },
+  "mustard": {
+    "name": "Mustard",
+    "nameGu": "રાઈ",
+    "nameHi": "सरसों",
+    "sowing": "October-November",
+    "harvest": "February-March",
+    "duration": 110,
+    "schedule": [
+      { "day": 0, "task": "Sowing", "taskGu": "વાવેતર", "taskHi": "बुवाई" },
+      { "day": 25, "task": "First irrigation", "taskGu": "પ્રથમ પિયત", "taskHi": "पहली सिंचाई" },
+      { "day": 45, "task": "Urea 30kg/acre", "taskGu": "યુરિયા ૩૦ કિલો", "taskHi": "यूरिया 30 किग्रा" },
+      { "day": 65, "task": "Aphid check", "taskGu": "માખી તપાસ", "taskHi": "माहू जाँच" },
+      { "day": 100, "task": "Harvest prep", "taskGu": "લણણી તૈયારી", "taskHi": "कटाई तैयारी" }
+    ]
+  },
+  "moong": {
+    "name": "Moong",
+    "nameGu": "મગ",
+    "nameHi": "मूंग",
+    "sowing": "June-July / Feb-Mar",
+    "harvest": "Sep-Oct / May-Jun",
+    "duration": 65,
+    "schedule": [
+      { "day": 0, "task": "Sowing", "taskGu": "વાવેતર", "taskHi": "बुवाई" },
+      { "day": 20, "task": "First irrigation", "taskGu": "પ્રથમ પિયત", "taskHi": "पहली सिंचाई" },
+      { "day": 35, "task": "Yellow Mosaic check", "taskGu": "પીળો મોઝેક તપાસ", "taskHi": "पीला मोज़ेक जाँच" },
+      { "day": 60, "task": "Harvest prep", "taskGu": "લણણી તૈયારી", "taskHi": "कटाई तैयारी" }
+    ]
+  },
+  "urad": {
+    "name": "Urad",
+    "nameGu": "અડદ",
+    "nameHi": "उड़द",
+    "sowing": "June-July",
+    "harvest": "September-October",
+    "duration": 75,
+    "schedule": [
+      { "day": 0, "task": "Sowing", "taskGu": "વાવેતર", "taskHi": "बुवाई" },
+      { "day": 20, "task": "First irrigation", "taskGu": "પ્રથમ પિયત", "taskHi": "पहली सिंचाई" },
+      { "day": 40, "task": "Whitefly check", "taskGu": "સફેદ માખી તપાસ", "taskHi": "सफेद मक्खी जाँच" },
+      { "day": 70, "task": "Harvest prep", "taskGu": "લણણી તૈયારી", "taskHi": "कटाई तैयारी" }
+    ]
+  },
+  "sesame": {
+    "name": "Sesame",
+    "nameGu": "તલ",
+    "nameHi": "तिल",
+    "sowing": "June-July",
+    "harvest": "September-October",
+    "duration": 85,
+    "schedule": [
+      { "day": 0, "task": "Sowing", "taskGu": "વાવેતર", "taskHi": "बुवाई" },
+      { "day": 20, "task": "Thinning", "taskGu": "છંટણી", "taskHi": "छँटाई" },
+      { "day": 40, "task": "First irrigation", "taskGu": "પ્રથમ પિયત", "taskHi": "पहली सिंचाई" },
+      { "day": 80, "task": "Harvest prep", "taskGu": "લણણી તૈયારી", "taskHi": "कटाई तैयारी" }
+    ]
+  }
+}
