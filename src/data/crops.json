@@ -69,5 +69,82 @@
       { "day": 30, "task": "First irrigation", "taskGu": "પ્રથમ પિયત", "taskHi": "पहली सिंचाई" },
       { "day": 60, "task": "Pest check", "taskGu": "જીવાત તપાસ", "taskHi": "कीट जाँच" }
     ]
+  },
+  "rice": {
+    "name": "Rice",
+    "nameGu": "ડાંગર",
+    "nameHi": "धान",
+    "sowing": "June-July",
+    "harvest": "October-November",
+    "duration": 120,
+    "schedule": [
+      { "day": 0, "task": "Nursery sowing", "taskGu": "રોપાણી વાવેતર", "taskHi": "नर्सरी बुवाई" },
+      { "day": 25, "task": "Transplanting", "taskGu": "રોપણી", "taskHi": "रोपाई" },
+      { "day": 40, "task": "First urea 50kg/acre", "taskGu": "પ્રથમ યુરિયા ૫૦ કિલો/એકર", "taskHi": "पहला यूरिया 50 किग्रा/एकड़" },
+      { "day": 65, "task": "Second urea", "taskGu": "બીજું યુરિયા", "taskHi": "दूसरा यूरिया" },
+      { "day": 90, "task": "Pest check", "taskGu": "જીવાત તપાસ", "taskHi": "कीट जाँच" },
+      { "day": 115, "task": "Harvest prep", "taskGu": "લણણી તૈયારી", "taskHi": "कटाई तैयारी" }
+    ]
+  },
+  "maize": {
+    "name": "Maize",
+    "nameGu": "મકાઈ",
+    "nameHi": "मक्का",
+    "sowing": "June-July / Oct-Nov",
+    "harvest": "September-October / Feb-March",
+    "duration": 100,
+    "schedule": [
+      { "day": 0, "task": "Sowing", "taskGu": "વાવેતર", "taskHi": "बुवाई" },
+      { "day": 20, "task": "First irrigation", "taskGu": "પ્રથમ પિયત", "taskHi": "पहली सिंचाई" },
+      { "day": 35, "task": "Urea 50kg/acre", "taskGu": "યુરિયા ૫૦ કિલો/એકર", "taskHi": "यूरिया 50 किग्रा/एकड़" },
+      { "day": 60, "task": "Pest check - Fall Armyworm", "taskGu": "જીવાત તપાસ - ફોલ આર્મીવોર્મ", "taskHi": "कीट जाँच - फॉल आर्मीवर्म" },
+      { "day": 90, "task": "Harvest prep", "taskGu": "લણણી તૈયારી", "taskHi": "कटाई तैयारी" }
+    ]
+  },
+  "potato": {
+    "name": "Potato",
+    "nameGu": "બટાકા",
+    "nameHi": "आलू",
+    "sowing": "October-November",
+    "harvest": "January-February",
+    "duration": 90,
+    "schedule": [
+      { "day": 0, "task": "Tubers planting", "taskGu": "કંદ વાવેતર", "taskHi": "कंद बुवाई" },
+      { "day": 15, "task": "First irrigation", "taskGu": "પ્રથમ પિયત", "taskHi": "पहली सिंचाई" },
+      { "day": 30, "task": "Earth up + Urea 50kg/acre", "taskGu": "માટી ચઢાવો + યુરિયા ૫૦ કિલો", "taskHi": "मिट्टी चढ़ाओ + यूरिया 50 किग्रा" },
+      { "day": 55, "task": "Late blight check", "taskGu": "લેટ બ્લાઇટ તપાસ", "taskHi": "पछेती झुलसा जाँच" },
+      { "day": 85, "task": "Harvest prep", "taskGu": "લણણી તૈયારી", "taskHi": "कटाई तैयारी" }
+    ]
+  },
+  "onion": {
+    "name": "Onion",
+    "nameGu": "ડુંગળી",
+    "nameHi": "प्याज",
+    "sowing": "Oct-Nov / May-Jun",
+    "harvest": "Feb-Apr / Oct-Nov",
+    "duration": 120,
+    "schedule": [
+      { "day": 0, "task": "Nursery sowing", "taskGu": "રોપાણી વાવેતર", "taskHi": "नर्सरी बुवाई" },
+      { "day": 40, "task": "Transplanting", "taskGu": "રોપણી", "taskHi": "रोपाई" },
+      { "day": 60, "task": "First urea 40kg/acre", "taskGu": "પ્રથમ યુરિયા ૪૦ કિલો/એકર", "taskHi": "पहला यूरिया 40 किग्रा/एकड़" },
+      { "day": 85, "task": "Thrips check", "taskGu": "થ્રિપ્સ તપાસ", "taskHi": "थ्रिप्स जाँच" },
+      { "day": 105, "task": "Stop irrigation", "taskGu": "પિયત બંધ કરો", "taskHi": "सिंचाई बंद करें" },
+      { "day": 115, "task": "Harvest prep", "taskGu": "લણણી તૈયારી", "taskHi": "कटाई तैयारी" }
+    ]
+  },
+  "soybean": {
+    "name": "Soybean",
+    "nameGu": "સોયાબીન",
+    "nameHi": "सोयाबीन",
+    "sowing": "June-July",
+    "harvest": "September-October",
+    "duration": 100,
+    "schedule": [
+      { "day": 0, "task": "Sowing with Rhizobium", "taskGu": "રાઇઝોબિયમ સાથે વાવેતર", "taskHi": "राइजोबियम के साथ बुवाई" },
+      { "day": 25, "task": "First irrigation", "taskGu": "પ્રથમ પિયત", "taskHi": "पहली सिंचाई" },
+      { "day": 45, "task": "Yellow Mosaic check", "taskGu": "પીળો મોઝેક તપાસ", "taskHi": "पीला मोज़ेक जाँच" },
+      { "day": 70, "task": "Pod filling stage", "taskGu": "શિંગ ભરાવાનો તબક્કો", "taskHi": "फली भरने का चरण" },
+      { "day": 95, "task": "Harvest prep", "taskGu": "લણણી તૈયારી", "taskHi": "कटाई तैयारी" }
+    ]
   }
-}
+      }
