@@ -28,7 +28,7 @@ export default function CalendarPage() {
                 : 'border border-[hsl(var(--border))]'
             }`}
           >
-            {cropsData[k].name}
+            {language === 'gu' ? cropsData[k].nameGu : language === 'hi' ? cropsData[k].nameHi : cropsData[k].name}
           </button>
         ))}
       </div>
