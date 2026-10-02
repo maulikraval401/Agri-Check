@@ -146,7 +146,7 @@
       { "day": 70, "task": "Pod filling stage", "taskGu": "શિંગ ભરાવાનો તબક્કો", "taskHi": "फली भरने का चरण" },
       { "day": 95, "task": "Harvest prep", "taskGu": "લણણી તૈયારી", "taskHi": "कटाई तैयारी" }
     ]
-  }
+  },
   "sugarcane": {
     "name": "Sugarcane",
     "nameGu": "શેરડી",
