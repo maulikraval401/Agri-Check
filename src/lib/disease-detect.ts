@@ -1,95 +1,81 @@
 import * as tf from '@tensorflow/tfjs';
 
-const MODEL_URL = '/models/plant-disease/model.json';
+export const DISEASE_LABELS = [
+  'Corn_Blight', 'Corn_Common_Rust', 'Corn_Gray_Leaf_Spot', 'Corn_Healthy',
+  'Cotton_bacterial_blight', 'Cotton_curl_virus', 'Cotton_fussarium_wilt', 'Cotton_healthy',
+  'Rice_Bacterial Leaf Blight', 'Rice_Brown Spot', 'Rice_Healthy Rice Leaf', 'Rice_Leaf Blast', 'Rice_Leaf scald', 'Rice_Sheath Blight',
+  'Sugarcane_Healthy', 'Sugarcane_Mosaic', 'Sugarcane_RedRot', 'Sugarcane_Rust', 'Sugarcane_Yellow',
+  'Tomato_Bacterial_spot', 'Tomato_Early_blight', 'Tomato_Late_blight', 'Tomato_Leaf_Mold',
+  'Tomato_Septoria_leaf_spot', 'Tomato_Spider_mites Two-spotted_spider_mite', 'Tomato_Target_Spot',
+  'Tomato_Tomato_Yellow_Leaf_Curl_Virus', 'Tomato_Tomato_mosaic_virus', 'Tomato_healthy', 'Tomato_powdery_mildew',
+  'Wheat_Aphid', 'Wheat_Black Rust', 'Wheat_Blast', 'Wheat_Brown Rust', 'Wheat_Common Root Rot',
+  'Wheat_Fusarium Head Blight', 'Wheat_Healthy', 'Wheat_Leaf Blight', 'Wheat_Mildew', 'Wheat_Mite',
+  'Wheat_Septoria', 'Wheat_Smut', 'Wheat_Stem fly', 'Wheat_Tan spot', 'Wheat_Yellow Rust',
+] as const;
 
-const CLASSES = [
-  'Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
-  'Blueberry___healthy', 'Cherry_(including_sour)___Powdery_mildew', 'Cherry_(including_sour)___healthy',
-  'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot', 'Corn_(maize)___Common_rust_', 'Corn_(maize)___Northern_Leaf_Blight', 'Corn_(maize)___healthy',
-  'Grape___Black_rot', 'Grape___Esca_(Black_Measles)', 'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)', 'Grape___healthy',
-  'Orange___Haunglongbing_(Citrus_greening)', 'Peach___Bacterial_spot', 'Peach___healthy',
-  'Pepper,_bell___Bacterial_spot', 'Pepper,_bell___healthy',
-  'Potato___Early_blight', 'Potato___Late_blight', 'Potato___healthy',
-  'Raspberry___healthy', 'Soybean___healthy', 'Squash___Powdery_mildew',
-  'Strawberry___Leaf_scorch', 'Strawberry___healthy',
-  'Tomato___Bacterial_spot', 'Tomato___Early_blight', 'Tomato___Late_blight', 'Tomato___Leaf_Mold',
-  'Tomato___Septoria_leaf_spot', 'Tomato___Spider_mites Two-spotted_spider_mite', 'Tomato___Target_Spot',
-  'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus', 'Tomato___healthy',
-];
+export type DiseaseLabel = typeof DISEASE_LABELS[number];
 
-let model: tf.LayersModel | null = null;
-let loadPromise: Promise<tf.LayersModel> | null = null;
-
-async function loadModel(): Promise<tf.LayersModel> {
-  if (model) return model;
-  if (loadPromise) return loadPromise;
-
-  loadPromise = tf.loadLayersModel(MODEL_URL).then((m) => {
-    model = m;
-    return m;
-  });
-
-  return loadPromise;
-}
-
-export type DiseaseResult = {
-  className: string;
+export interface Prediction {
+  label: string;
   crop: string;
   disease: string;
   confidence: number;
   isHealthy: boolean;
-  isConfident: boolean;
-  topPredictions: { className: string; confidence: number }[];
-};
-
-export async function detectDisease(imageDataUrl: string): Promise<DiseaseResult> {
-  const m = await loadModel();
-
-  const img = new Image();
-  img.src = imageDataUrl;
-  await new Promise((r) => { img.onload = r; });
-
-  // CORRECT PREPROCESSING for MobileNetV1: [-1, 1] range
-  const tensor = tf.browser
-    .fromPixels(img)
-    .resizeBilinear([224, 224])
-    .toFloat()
-    .div(127.5)
-    .sub(1)
-    .expandDims(0);
-
-  const pred = m.predict(tensor) as tf.Tensor;
-  const probs = await pred.data();
-
-  // Get top 3 predictions
-  const indexed = Array.from(probs).map((conf, idx) => ({ idx, conf }));
-  indexed.sort((a, b) => b.conf - a.conf);
-  const top3 = indexed.slice(0, 3);
-
-  const topPredictions = top3.map(({ idx, conf }) => ({
-    className: CLASSES[idx] || 'Unknown',
-    confidence: conf,
-  }));
-
-  const maxIdx = top3[0].idx;
-  const maxProb = top3[0].conf;
-
-  const className = CLASSES[maxIdx] || 'Unknown';
-  const [crop, disease] = className.split('___');
-
-  tensor.dispose();
-  pred.dispose();
-
-  // 65% threshold for confidence
-  const isConfident = maxProb >= 0.65;
-
-  return {
-    className,
-    crop: crop.replace(/_/g, ' ').replace(/\(.*?\)/g, '').trim(),
-    disease: disease.replace(/_/g, ' ').replace(/_\s*$/, '').trim(),
-    confidence: maxProb,
-    isHealthy: disease === 'healthy',
-    isConfident,
-    topPredictions,
-  };
+  rank: number;
 }
+
+const MODEL_URL = '/models/agri-disease/model.json';
+const INPUT_SIZE = 224;
+
+let _modelPromise: Promise<tf.LayersModel> | null = null;
+
+export function loadDiseaseModel(): Promise<tf.LayersModel> {
+  if (!_modelPromise) {
+    _modelPromise = tf.loadLayersModel(MODEL_URL).catch((err) => {
+      _modelPromise = null;
+      throw err;
+    });
+  }
+  return _modelPromise;
+}
+
+export function parseLabel(label: string) {
+  const idx = label.indexOf('_');
+  if (idx === -1) return { crop: label, disease: label, isHealthy: false };
+  const crop = label.slice(0, idx);
+  const disease = label.slice(idx + 1).replace(/_/g, ' ');
+  const isHealthy = /healthy/i.test(label);
+  return { crop, disease, isHealthy };
+}
+
+export async function predictDisease(
+  source: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement
+): Promise<Prediction[]> {
+  const model = await loadDiseaseModel();
+
+  // Preprocessing: resize 224x224, pixel/127.5 - 1 → range [-1, 1]
+  const input = tf.tidy(() => {
+    let img = tf.browser.fromPixels(source);
+    img = tf.image.resizeBilinear(img, [INPUT_SIZE, INPUT_SIZE]);
+    img = img.toFloat().div(127.5).sub(1);
+    return img.expandDims(0);
+  });
+
+  const output = model.predict(input) as tf.Tensor;
+  const probs = await output.data();
+
+  input.dispose();
+  output.dispose();
+
+  // Top 5 predictions
+  const ranked = Array.from(probs)
+    .map((confidence, index) => ({ confidence, index }))
+    .sort((a, b) => b.confidence - a.confidence)
+    .slice(0, 5);
+
+  return ranked.map(({ confidence, index }, i) => {
+    const label = DISEASE_LABELS[index];
+    const { crop, disease, isHealthy } = parseLabel(label);
+    return { label, crop, disease, confidence, isHealthy, rank: i + 1 };
+  });
+                                        }
