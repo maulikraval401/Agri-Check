@@ -67,7 +67,7 @@ export async function predictDisease(
   const input = tf.tidy(() => {
     let img = tf.browser.fromPixels(source);
     img = tf.image.resizeBilinear(img, [INPUT_SIZE, INPUT_SIZE]);
-    img = img.toFloat();
+    img = img.toFloat().div(127.5).sub(1);
     return img.expandDims(0);
   });
 
