@@ -28,7 +28,8 @@ let modelPromise: Promise<tf.GraphModel> | null = null;
 function getModel() {
   if (!modelPromise) {
     modelPromise = (async () => {
-      await tf.setBackend('cpu'); // WebGL phone pe galat output de raha tha
+      // WebGL phone pe galat output deta tha, isliye CPU
+      await tf.setBackend('cpu');
       await tf.ready();
       return tf.loadGraphModel(MODEL_URL);
     })().catch((e) => {
@@ -116,34 +117,4 @@ export async function detectDisease(imageSrc: string): Promise<DiseaseResult> {
       confidence: p.score,
     })),
   };
-}
-
-// ---- TEMPORARY DEBUG (baad me hata denge) ----
-export async function debugDetect(imageSrc: string): Promise<string> {
-  const model = await getModel();
-  const img = await loadImage(imageSrc);
-  const lines: string[] = [];
-
-  const run = async (name: string, make: () => tf.Tensor3D, norm: (t: tf.Tensor) => tf.Tensor) => {
-    const out = tf.tidy(() => model.predict(norm(make()).expandDims(0)) as tf.Tensor);
-    const s = Array.from(await out.data());
-    out.dispose();
-    const i = s.indexOf(Math.max(...s));
-    lines.push(`${name}: ${DISEASE_LABELS[i]} ${(s[i] * 100).toFixed(1)}%`);
-  };
-
-  const m1 = (t: tf.Tensor) => t.div(127.5).sub(1);
-  const z1 = (t: tf.Tensor) => t.div(255);
-  const canvas = smoothResize(img, IMG_SIZE);
-
-  const tfResize = () =>
-    tf.image.resizeBilinear(tf.browser.fromPixels(img).toFloat() as tf.Tensor3D, [IMG_SIZE, IMG_SIZE]);
-  const cvResize = () => tf.browser.fromPixels(canvas).toFloat() as tf.Tensor3D;
-
-  await run('tfResize -1..1', tfResize, m1);
-  await run('tfResize 0..1', tfResize, z1);
-  await run('canvas -1..1', cvResize, m1);
-  await run('canvas 0..1', cvResize, z1);
-
-  return `backend: ${tf.getBackend()}\n` + lines.join('\n');
-                  }
+                                         }
