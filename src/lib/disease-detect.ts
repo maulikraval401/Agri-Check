@@ -1,7 +1,7 @@
 import * as tf from '@tensorflow/tfjs';
 import { DISEASE_LABELS } from './disease-labels';
 
-const MODEL_URL = '/models/plant-disease-v2/model.json';
+const MODEL_URL = '/models/agri-disease/model.json';
 const IMG_SIZE = 224;
 
 export interface DiseaseResult {
