@@ -40,9 +40,8 @@ export default function DiseasePage() {
         const r = await detectDisease(dataUrl);
         setResult(r);
       } catch (err: any) {
-  console.error(err);
-  setError(`Error: ${err?.message || 'Unknown error'}`);
-      }
+        console.error(err);
+        setError(`Error: ${err?.message || 'Unknown error'}`);
       } finally {
         setLoading(false);
       }
@@ -155,7 +154,9 @@ export default function DiseasePage() {
           )}
 
           {error && (
-            <p className="mt-4 text-sm text-[hsl(var(--destructive))]">{error}</p>
+            <p className="mt-4 break-words text-sm text-[hsl(var(--destructive))]">
+              {error}
+            </p>
           )}
 
           {result && !loading && (
@@ -240,4 +241,4 @@ export default function DiseasePage() {
       )}
     </div>
   );
-          }
+    }
