@@ -38,11 +38,11 @@ const MODEL_URL = '/models/agri-disease/model.json';
 const INPUT_SIZE = 224;
 const CONFIDENCE_THRESHOLD = 0.6;
 
-let _modelPromise: Promise<tf.LayersModel> | null = null;
+let _modelPromise: Promise<tf.GraphModel> | null = null;
 
-export function loadDiseaseModel(): Promise<tf.LayersModel> {
+export function loadDiseaseModel(): Promise<tf.GraphModel> {
   if (!_modelPromise) {
-    _modelPromise = tf.loadLayersModel(MODEL_URL).catch((err) => {
+    _modelPromise = tf.loadGraphModel(MODEL_URL).catch((err) => {
       _modelPromise = null;
       throw err;
     });
@@ -71,10 +71,16 @@ export async function predictDisease(
     return img.expandDims(0);
   });
 
-  const output = model.predict(input) as tf.Tensor;
+  const prediction = model.predict(input);
+  const output = Array.isArray(prediction) ? prediction[0] : (prediction as tf.Tensor);
   const probs = await output.data();
+
   input.dispose();
-  output.dispose();
+  if (Array.isArray(prediction)) {
+    prediction.forEach((t) => t.dispose());
+  } else {
+    (prediction as tf.Tensor).dispose();
+  }
 
   const ranked = Array.from(probs)
     .map((confidence, index) => ({ confidence, index }))
@@ -115,4 +121,4 @@ export async function detectDisease(imageSrc: string): Promise<DiseaseResult> {
       confidence: p.confidence,
     })),
   };
-}
+  }
