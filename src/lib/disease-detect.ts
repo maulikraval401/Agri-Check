@@ -24,8 +24,19 @@ export interface Prediction {
   rank: number;
 }
 
+export interface DiseaseResult {
+  className: string;
+  crop: string;
+  disease: string;
+  confidence: number;
+  isHealthy: boolean;
+  isConfident: boolean;
+  topPredictions: { className: string; confidence: number }[];
+}
+
 const MODEL_URL = '/models/agri-disease/model.json';
 const INPUT_SIZE = 224;
+const CONFIDENCE_THRESHOLD = 0.6;
 
 let _modelPromise: Promise<tf.LayersModel> | null = null;
 
@@ -53,7 +64,6 @@ export async function predictDisease(
 ): Promise<Prediction[]> {
   const model = await loadDiseaseModel();
 
-  // Preprocessing: resize 224x224, pixel/127.5 - 1 → range [-1, 1]
   const input = tf.tidy(() => {
     let img = tf.browser.fromPixels(source);
     img = tf.image.resizeBilinear(img, [INPUT_SIZE, INPUT_SIZE]);
@@ -63,11 +73,9 @@ export async function predictDisease(
 
   const output = model.predict(input) as tf.Tensor;
   const probs = await output.data();
-
   input.dispose();
   output.dispose();
 
-  // Top 5 predictions
   const ranked = Array.from(probs)
     .map((confidence, index) => ({ confidence, index }))
     .sort((a, b) => b.confidence - a.confidence)
@@ -78,4 +86,33 @@ export async function predictDisease(
     const { crop, disease, isHealthy } = parseLabel(label);
     return { label, crop, disease, confidence, isHealthy, rank: i + 1 };
   });
-                                        }
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Image load failed'));
+    img.src = src;
+  });
+}
+
+export async function detectDisease(imageSrc: string): Promise<DiseaseResult> {
+  const img = await loadImage(imageSrc);
+  const preds = await predictDisease(img);
+  const top = preds[0];
+
+  return {
+    className: top.label,
+    crop: top.crop,
+    disease: top.disease,
+    confidence: top.confidence,
+    isHealthy: top.isHealthy,
+    isConfident: top.confidence >= CONFIDENCE_THRESHOLD,
+    topPredictions: preds.map((p) => ({
+      className: p.label,
+      confidence: p.confidence,
+    })),
+  };
+}
