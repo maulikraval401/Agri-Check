@@ -27,7 +27,11 @@ let modelPromise: Promise<tf.GraphModel> | null = null;
 
 function getModel() {
   if (!modelPromise) {
-    modelPromise = tf.loadGraphModel(MODEL_URL).catch((e) => {
+    modelPromise = (async () => {
+      await tf.setBackend('cpu'); // WebGL phone pe galat output de raha tha
+      await tf.ready();
+      return tf.loadGraphModel(MODEL_URL);
+    })().catch((e) => {
       modelPromise = null;
       throw e;
     });
@@ -44,7 +48,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-// Badi photo ko aadha-aadha karke chhota karo (smooth, PIL jaisa)
+// Badi photo ko aadha-aadha karke chhota karo (smooth)
 function smoothResize(img: HTMLImageElement, size: number): HTMLCanvasElement {
   let cur: HTMLCanvasElement | HTMLImageElement = img;
   let w = img.naturalWidth || img.width;
@@ -141,5 +145,5 @@ export async function debugDetect(imageSrc: string): Promise<string> {
   await run('canvas -1..1', cvResize, m1);
   await run('canvas 0..1', cvResize, z1);
 
-  return lines.join('\n');
-}
+  return `backend: ${tf.getBackend()}\n` + lines.join('\n');
+                  }
