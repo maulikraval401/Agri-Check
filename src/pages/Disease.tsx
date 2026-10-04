@@ -1,23 +1,16 @@
 import { useRef, useState, type ChangeEvent } from 'react';
-import { Upload, Camera, Loader2, Check, AlertTriangle, Info, HelpCircle, Bug, ArrowRight } from 'lucide-react';
+import { Upload, Camera, Loader2, Check, AlertTriangle, HelpCircle, Bug, ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { detectDisease, type DiseaseResult } from '@/lib/disease-detect';
-import { detectCottonViaAPI } from '@/lib/cotton-api'; 
 import { Link } from 'wouter';
+
 const SUPPORTED_PLANTS = [
-  { emoji: '🍎', name: 'Apple' },
-  { emoji: '🫐', name: 'Blueberry' },
-  { emoji: '🍒', name: 'Cherry' },
   { emoji: '🌽', name: 'Corn' },
-  { emoji: '🍇', name: 'Grape' },
-  { emoji: '🍊', name: 'Orange' },
-  { emoji: '🍑', name: 'Peach' },
-  { emoji: '🫑', name: 'Pepper' },
-  { emoji: '🥔', name: 'Potato' },
-  { emoji: '🌱', name: 'Soybean' },
-  { emoji: '🥒', name: 'Squash' },
-  { emoji: '🍓', name: 'Strawberry' },
+  { emoji: '🌿', name: 'Cotton' },
+  { emoji: '🌾', name: 'Rice' },
+  { emoji: '🎋', name: 'Sugarcane' },
   { emoji: '🍅', name: 'Tomato' },
+  { emoji: '🌾', name: 'Wheat' },
 ];
 
 export default function DiseasePage() {
@@ -26,7 +19,6 @@ export default function DiseasePage() {
   const [result, setResult] = useState<DiseaseResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [cropType, setCropType] = useState<'plant' | 'cotton'>('plant');
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
 
@@ -45,24 +37,9 @@ export default function DiseasePage() {
       setLoading(true);
 
       try {
-  if (cropType === 'cotton') {
-    const cottonResult = await detectCottonViaAPI(dataUrl);
-    setResult({
-      className: cottonResult.className,
-      crop: 'Cotton',
-      disease: cottonResult.className,
-      confidence: cottonResult.confidence,
-      isHealthy: false,
-      isConfident: cottonResult.confidence >= 0.6,
-      topPredictions: [
-        { className: cottonResult.className, confidence: cottonResult.confidence },
-      ],
-    });
-  } else {
-    const r = await detectDisease(dataUrl);
-    setResult(r);
-  }
-} catch (err) {
+        const r = await detectDisease(dataUrl);
+        setResult(r);
+      } catch (err) {
         console.error(err);
         setError(
           language === 'gu'
@@ -92,7 +69,6 @@ export default function DiseasePage() {
         Leaf ki photo lo — disease ya healthy batao
       </p>
 
-      {/* Photo tips */}
       <div className="mt-4 rounded-xl border border-[#e6c879] bg-[#fbf0c9] p-3 text-xs text-[#66511b]">
         <p className="font-bold mb-1">📸 Photo tips:</p>
         <ul className="ml-4 list-disc space-y-0.5">
@@ -102,53 +78,27 @@ export default function DiseasePage() {
           <li>Background plain ho</li>
         </ul>
       </div>
-{/* Browse Diseases Button */}
-<Link
-  href="/pests"
-  className="mt-4 flex items-center gap-3 rounded-[1.35rem] border border-[hsl(var(--primary)/.3)] bg-[hsl(var(--primary)/.08)] p-4 no-underline"
->
-  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]">
-    <Bug size={22} />
-  </span>
-  <div className="min-w-0 flex-1">
-    <p className="font-bold text-[hsl(var(--foreground))]">
-      Browse Diseases
-    </p>
-    <p className="mt-0.5 text-xs text-[hsl(var(--muted-foreground))]">
-      Crop-wise disease list — symptoms, treatment, prevention
-    </p>
-  </div>
-  <ArrowRight size={18} className="shrink-0 text-[hsl(var(--primary))]" />
-</Link>
-      
-{/* Crop Selector */}
-<div className="mt-4 grid grid-cols-2 gap-2">
-  <button
-    type="button"
-    onClick={() => setCropType('plant')}
-    className={`flex min-h-12 items-center justify-center gap-2 rounded-xl text-sm font-bold ${
-      cropType === 'plant'
-        ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
-        : 'border border-[hsl(var(--border))]'
-    }`}
-  >
-    🍅 Plants
-  </button>
-  <button
-    type="button"
-    onClick={() => setCropType('cotton')}
-    className={`flex min-h-12 items-center justify-center gap-2 rounded-xl text-sm font-bold ${
-      cropType === 'cotton'
-        ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
-        : 'border border-[hsl(var(--border))]'
-    }`}
-  >
-    🌿 Cotton
-  </button>
-</div>
-      {/* Supported Plants */}
+
+      <Link
+        href="/pests"
+        className="mt-4 flex items-center gap-3 rounded-[1.35rem] border border-[hsl(var(--primary)/.3)] bg-[hsl(var(--primary)/.08)] p-4 no-underline"
+      >
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]">
+          <Bug size={22} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-bold text-[hsl(var(--foreground))]">
+            Browse Diseases
+          </p>
+          <p className="mt-0.5 text-xs text-[hsl(var(--muted-foreground))]">
+            Crop-wise disease list — symptoms, treatment, prevention
+          </p>
+        </div>
+        <ArrowRight size={18} className="shrink-0 text-[hsl(var(--primary))]" />
+      </Link>
+
       <div className="mt-5">
-        <p className="eyebrow mb-3">Supported Plants ({SUPPORTED_PLANTS.length})</p>
+        <p className="eyebrow mb-3">Supported Crops ({SUPPORTED_PLANTS.length})</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
           {SUPPORTED_PLANTS.map((plant) => (
             <div
@@ -162,7 +112,6 @@ export default function DiseasePage() {
         </div>
       </div>
 
-      {/* Camera / Gallery */}
       {!image && (
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <button
@@ -263,22 +212,19 @@ export default function DiseasePage() {
                       </p>
                       <div className="mt-3 space-y-1 rounded-lg bg-white/50 p-2">
                         <p className="text-[.65rem] font-bold uppercase opacity-70">
-
                           Top predictions:
                         </p>
                         {result.topPredictions.map((p, i) => (
-  
-                  <div key={i} className="flex justify-between text-xs">
-  
-                    <span className="truncate">
-        {p.className.split('___').join(' — ').replace(/_/g, ' ')}
-      </span>
-      <span className="font-bold ml-2">
-        {(p.confidence * 100).toFixed(1)}%
-      </span>
-    </div>
-  ))}
-</div>
+                          <div key={i} className="flex justify-between text-xs">
+                            <span className="truncate">
+                              {p.className.replace(/_/g, ' ')}
+                            </span>
+                            <span className="font-bold ml-2">
+                              {(p.confidence * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
@@ -297,4 +243,4 @@ export default function DiseasePage() {
       )}
     </div>
   );
-             }
+          }
