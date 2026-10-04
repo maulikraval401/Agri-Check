@@ -39,13 +39,10 @@ export default function DiseasePage() {
       try {
         const r = await detectDisease(dataUrl);
         setResult(r);
-      } catch (err) {
-        console.error(err);
-        setError(
-          language === 'gu'
-            ? 'ફોટો વાંચી શકાયો નથી. ફરી પ્રયાસ કરો.'
-            : 'Photo read nahi hua. Dobara try karo.',
-        );
+      } catch (err: any) {
+  console.error(err);
+  setError(`Error: ${err?.message || 'Unknown error'}`);
+      }
       } finally {
         setLoading(false);
       }
