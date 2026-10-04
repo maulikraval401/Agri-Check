@@ -1,28 +1,5 @@
-import * as tf from '@tensorflow/tfjs';
-
-export const DISEASE_LABELS = [
-  'Corn_Blight', 'Corn_Common_Rust', 'Corn_Gray_Leaf_Spot', 'Corn_Healthy',
-  'Cotton_bacterial_blight', 'Cotton_curl_virus', 'Cotton_fussarium_wilt', 'Cotton_healthy',
-  'Rice_Bacterial Leaf Blight', 'Rice_Brown Spot', 'Rice_Healthy Rice Leaf', 'Rice_Leaf Blast', 'Rice_Leaf scald', 'Rice_Sheath Blight',
-  'Sugarcane_Healthy', 'Sugarcane_Mosaic', 'Sugarcane_RedRot', 'Sugarcane_Rust', 'Sugarcane_Yellow',
-  'Tomato_Bacterial_spot', 'Tomato_Early_blight', 'Tomato_Late_blight', 'Tomato_Leaf_Mold',
-  'Tomato_Septoria_leaf_spot', 'Tomato_Spider_mites Two-spotted_spider_mite', 'Tomato_Target_Spot',
-  'Tomato_Tomato_Yellow_Leaf_Curl_Virus', 'Tomato_Tomato_mosaic_virus', 'Tomato_healthy', 'Tomato_powdery_mildew',
-  'Wheat_Aphid', 'Wheat_Black Rust', 'Wheat_Blast', 'Wheat_Brown Rust', 'Wheat_Common Root Rot',
-  'Wheat_Fusarium Head Blight', 'Wheat_Healthy', 'Wheat_Leaf Blight', 'Wheat_Mildew', 'Wheat_Mite',
-  'Wheat_Septoria', 'Wheat_Smut', 'Wheat_Stem fly', 'Wheat_Tan spot', 'Wheat_Yellow Rust',
-] as const;
-
-export type DiseaseLabel = typeof DISEASE_LABELS[number];
-
-export interface Prediction {
-  label: string;
-  crop: string;
-  disease: string;
-  confidence: number;
-  isHealthy: boolean;
-  rank: number;
-}
+const HF_API_URL = 'https://api-inference.huggingface.co/models/Arko007/agromind-plant-disease-nfnet';
+const HF_TOKEN = import.meta.env.VITE_HF_TOKEN;
 
 export interface DiseaseResult {
   className: string;
@@ -34,91 +11,76 @@ export interface DiseaseResult {
   topPredictions: { className: string; confidence: number }[];
 }
 
-const MODEL_URL = '/models/agri-disease/model.json';
-const INPUT_SIZE = 224;
-const CONFIDENCE_THRESHOLD = 0.6;
-
-let _modelPromise: Promise<tf.GraphModel> | null = null;
-
-export function loadDiseaseModel(): Promise<tf.GraphModel> {
-  if (!_modelPromise) {
-    _modelPromise = tf.loadGraphModel(MODEL_URL).catch((err) => {
-      _modelPromise = null;
-      throw err;
-    });
-  }
-  return _modelPromise;
-}
-
 export function parseLabel(label: string) {
-  const idx = label.indexOf('_');
-  if (idx === -1) return { crop: label, disease: label, isHealthy: false };
-  const crop = label.slice(0, idx);
-  const disease = label.slice(idx + 1).replace(/_/g, ' ');
-  const isHealthy = /healthy/i.test(label);
+  const cleanLabel = label.replace(/_/g, ' ').trim();
+  let crop = 'Unknown';
+  let disease = cleanLabel;
+  let isHealthy = /healthy/i.test(cleanLabel);
+
+  const crops = ['Corn', 'Cotton', 'Rice', 'Sugarcane', 'Tomato', 'Wheat', 'Apple', 'Cassava', 'Cherry', 'Chili', 'Coffee', 'Cucumber', 'Grape', 'Mango', 'Peach', 'Pepper', 'Pomegranate', 'Potato', 'Soybean', 'Strawberry', 'Tea'];
+
+  for (const c of crops) {
+    if (cleanLabel.toLowerCase().includes(c.toLowerCase())) {
+      crop = c;
+      disease = cleanLabel.replace(new RegExp(c, 'i'), '').replace(/^[\s_-]+/, '').trim();
+      break;
+    }
+  }
+
+  if (!disease) disease = isHealthy ? 'Healthy' : cleanLabel;
   return { crop, disease, isHealthy };
 }
 
-export async function predictDisease(
-  source: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement
-): Promise<Prediction[]> {
-  const model = await loadDiseaseModel();
-
-  const input = tf.tidy(() => {
-    let img = tf.browser.fromPixels(source);
-    img = tf.image.resizeBilinear(img, [INPUT_SIZE, INPUT_SIZE]);
-    img = img.toFloat().div(127.5).sub(1);
-    return img.expandDims(0);
-  });
-
-  const prediction = model.predict(input);
-  const output = Array.isArray(prediction) ? prediction[0] : (prediction as tf.Tensor);
-  const probs = await output.data();
-
-  input.dispose();
-  if (Array.isArray(prediction)) {
-    prediction.forEach((t) => t.dispose());
-  } else {
-    (prediction as tf.Tensor).dispose();
-  }
-
-  const ranked = Array.from(probs)
-    .map((confidence, index) => ({ confidence, index }))
-    .sort((a, b) => b.confidence - a.confidence)
-    .slice(0, 5);
-
-  return ranked.map(({ confidence, index }, i) => {
-    const label = DISEASE_LABELS[index];
-    const { crop, disease, isHealthy } = parseLabel(label);
-    return { label, crop, disease, confidence, isHealthy, rank: i + 1 };
-  });
-}
-
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('Image load failed'));
-    img.src = src;
-  });
+function dataURLtoBlob(dataUrl: string): Blob {
+  const arr = dataUrl.split(',');
+  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) u8arr[n] = bstr.charCodeAt(n);
+  return new Blob([u8arr], { type: mime });
 }
 
 export async function detectDisease(imageSrc: string): Promise<DiseaseResult> {
-  const img = await loadImage(imageSrc);
-  const preds = await predictDisease(img);
-  const top = preds[0];
+  const blob = dataURLtoBlob(imageSrc);
+
+  const response = await fetch(HF_API_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${HF_TOKEN}`,
+      'Content-Type': 'application/octet-stream',
+    },
+    body: blob,
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error('HF API Error:', response.status, errText);
+    throw new Error(`Model error: ${response.status}`);
+  }
+
+  const predictions: { label: string; score: number }[] = await response.json();
+
+  if (!Array.isArray(predictions) || predictions.length === 0) {
+    throw new Error('No predictions returned');
+  }
+
+  predictions.sort((a, b) => b.score - a.score);
+  const top = predictions[0];
+  const { crop, disease, isHealthy } = parseLabel(top.label);
+
+  const topPredictions = predictions.slice(0, 5).map((p) => ({
+    className: p.label,
+    confidence: p.score,
+  }));
 
   return {
     className: top.label,
-    crop: top.crop,
-    disease: top.disease,
-    confidence: top.confidence,
-    isHealthy: top.isHealthy,
-    isConfident: top.confidence >= CONFIDENCE_THRESHOLD,
-    topPredictions: preds.map((p) => ({
-      className: p.label,
-      confidence: p.confidence,
-    })),
+    crop,
+    disease,
+    confidence: top.score,
+    isHealthy,
+    isConfident: top.score >= 0.3,
+    topPredictions,
   };
-  }
+                  }
