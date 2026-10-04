@@ -4,9 +4,20 @@ export default async function handler(req, res) {
   }
 
   const HF_TOKEN = process.env.VITE_HF_TOKEN;
+  const MODEL_URL = 'https://api-inference.huggingface.co/models/Arko007/agromind-plant-disease-nfnet';
+
+  // Debug info
+  const debug = {
+    hasToken: !!HF_TOKEN,
+    tokenPrefix: HF_TOKEN ? HF_TOKEN.substring(0, 7) : 'NONE',
+    modelUrl: MODEL_URL,
+  };
 
   if (!HF_TOKEN) {
-    return res.status(500).json({ error: 'HF token not configured' });
+    return res.status(500).json({ 
+      error: 'HF token not configured',
+      debug 
+    });
   }
 
   try {
@@ -17,22 +28,45 @@ export default async function handler(req, res) {
       req.on('error', reject);
     });
 
-    const response = await fetch(
-      'https://api-inference.huggingface.co/models/Arko007/agromind-plant-disease-nfnet',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${HF_TOKEN}`,
-          'Content-Type': 'application/octet-stream',
-        },
-        body: imageBuffer,
-      }
-    );
+    const hfResponse = await fetch(MODEL_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${HF_TOKEN}`,
+        'Content-Type': 'application/octet-stream',
+      },
+      body: imageBuffer,
+    });
 
-    const data = await response.json();
-    return res.status(response.status).json(data);
+    const responseText = await hfResponse.text();
+
+    // Agar HF ne error diya
+    if (!hfResponse.ok) {
+      return res.status(hfResponse.status).json({
+        error: 'HF API error',
+        status: hfResponse.status,
+        hfResponse: responseText.substring(0, 500),
+        debug,
+      });
+    }
+
+    // Success
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      return res.status(500).json({
+        error: 'Invalid JSON from HF',
+        rawResponse: responseText.substring(0, 500),
+        debug,
+      });
+    }
+
+    return res.status(200).json(data);
   } catch (error) {
-    console.error('Proxy error:', error);
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({
+      error: error.message,
+      stack: error.stack?.substring(0, 300),
+      debug,
+    });
   }
-  }
+    }
