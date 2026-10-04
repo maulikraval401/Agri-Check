@@ -1,7 +1,7 @@
 import { useRef, useState, type ChangeEvent } from 'react';
 import { Upload, Camera, Loader2, Check, AlertTriangle, HelpCircle, Bug, ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { detectDisease, debugDetect, type DiseaseResult } from '@/lib/disease-detect';
+import { detectDisease, type DiseaseResult } from '@/lib/disease-detect';
 import { Link } from 'wouter';
 
 const SUPPORTED_PLANTS = [
@@ -37,7 +37,6 @@ export default function DiseasePage() {
       setLoading(true);
 
       try {
-        alert(await debugDetect(dataUrl)); // TEMPORARY DEBUG
         const r = await detectDisease(dataUrl);
         setResult(r);
       } catch (err: any) {
@@ -242,4 +241,4 @@ export default function DiseasePage() {
       )}
     </div>
   );
-              }
+  }
