@@ -1,5 +1,4 @@
-const HF_API_URL = 'https://api-inference.huggingface.co/models/Arko007/agromind-plant-disease-nfnet';
-const HF_TOKEN = import.meta.env.VITE_HF_TOKEN;
+const API_URL = '/api/detect';
 
 export interface DiseaseResult {
   className: string;
@@ -44,10 +43,9 @@ function dataURLtoBlob(dataUrl: string): Blob {
 export async function detectDisease(imageSrc: string): Promise<DiseaseResult> {
   const blob = dataURLtoBlob(imageSrc);
 
-  const response = await fetch(HF_API_URL, {
+  const response = await fetch(API_URL, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${HF_TOKEN}`,
       'Content-Type': 'application/octet-stream',
     },
     body: blob,
@@ -55,7 +53,7 @@ export async function detectDisease(imageSrc: string): Promise<DiseaseResult> {
 
   if (!response.ok) {
     const errText = await response.text();
-    console.error('HF API Error:', response.status, errText);
+    console.error('Proxy API Error:', response.status, errText);
     throw new Error(`Model error: ${response.status}`);
   }
 
@@ -83,4 +81,4 @@ export async function detectDisease(imageSrc: string): Promise<DiseaseResult> {
     isConfident: top.score >= 0.3,
     topPredictions,
   };
-                  }
+    }
