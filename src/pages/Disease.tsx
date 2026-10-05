@@ -15,6 +15,7 @@ const SUPPORTED_PLANTS = [
 
 export default function DiseasePage() {
   const { language } = useLanguage();
+  const [selectedCrop, setSelectedCrop] = useState<string | null>(null);
   const [image, setImage] = useState<string | null>(null);
   const [result, setResult] = useState<DiseaseResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -37,7 +38,7 @@ export default function DiseasePage() {
       setLoading(true);
 
       try {
-        const r = await detectDisease(dataUrl);
+        const r = await detectDisease(dataUrl, selectedCrop);
         setResult(r);
       } catch (err: any) {
         console.error(err);
@@ -94,16 +95,37 @@ export default function DiseasePage() {
       </Link>
 
       <div className="mt-5">
-        <p className="eyebrow mb-3">Supported Crops ({SUPPORTED_PLANTS.length})</p>
+        <p className="eyebrow mb-1">Pehle crop chuno ({SUPPORTED_PLANTS.length})</p>
+        <p className="mb-3 text-xs text-[hsl(var(--muted-foreground))]">
+          Crop chunne se result zyada sahi aata hai. Na pata ho to &quot;Auto&quot; rakho.
+        </p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+          <button
+            type="button"
+            onClick={() => setSelectedCrop(null)}
+            className={`flex min-h-12 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold ${
+              selectedCrop === null
+                ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/.12)]'
+                : 'border-[hsl(var(--border))] bg-[hsl(var(--card))]'
+            }`}
+          >
+            <span className="text-lg">🔍</span>
+            <span>Auto</span>
+          </button>
           {SUPPORTED_PLANTS.map((plant) => (
-            <div
+            <button
+              type="button"
               key={plant.name}
-              className="flex min-h-12 items-center gap-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-2 text-sm font-semibold"
+              onClick={() => setSelectedCrop(plant.name)}
+              className={`flex min-h-12 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold ${
+                selectedCrop === plant.name
+                  ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/.12)]'
+                  : 'border-[hsl(var(--border))] bg-[hsl(var(--card))]'
+              }`}
             >
               <span className="text-lg">{plant.emoji}</span>
               <span>{plant.name}</span>
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -161,7 +183,29 @@ export default function DiseasePage() {
 
           {result && !loading && (
             <>
-              {!result.isConfident ? (
+              {result.cropMismatch ? (
+                <div className="mt-4 rounded-[1.35rem] border border-[#e6c879] bg-[#fbf0c9] p-5 text-[#66511b]">
+                  <div className="flex items-start gap-3">
+                    <HelpCircle size={22} className="mt-0.5 shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-bold">
+                        Ye photo {selectedCrop} ke leaf jaisi nahi lag rahi
+                      </p>
+                      <p className="mt-1 text-sm">
+                        Kripya sirf {selectedCrop} ke ek saaf leaf ki photo lo
+                        (fruit/boll/stem nahi), ya sahi crop chuno.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={reset}
+                    className="mt-4 min-h-11 w-full rounded-xl border border-current/20 text-sm font-bold"
+                  >
+                    Try another leaf
+                  </button>
+                </div>
+              ) : !result.isConfident ? (
                 <div className="mt-4 rounded-[1.35rem] border border-[#e6c879] bg-[#fbf0c9] p-5 text-[#66511b]">
                   <div className="flex items-start gap-3">
                     <HelpCircle size={22} className="mt-0.5 shrink-0" />
@@ -241,4 +285,4 @@ export default function DiseasePage() {
       )}
     </div>
   );
-  }
+      }
