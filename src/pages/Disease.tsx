@@ -3,7 +3,7 @@ import { Upload, Camera, Loader2, Check, AlertTriangle, HelpCircle, Bug, ArrowRi
 import { useLanguage } from '@/i18n/LanguageContext';
 import { detectDisease, type DiseaseResult } from '@/lib/disease-detect';
 import { Link } from 'wouter';
-
+import DiseaseInfoCard from '@/components/disease-info-card';
 const SUPPORTED_PLANTS = [
   { emoji: '🌽', name: 'Corn' },
   { emoji: '🌿', name: 'Cotton' },
@@ -278,8 +278,12 @@ export default function DiseasePage() {
                     Try another leaf
                   </button>
                 </div>
+                            )}
+              {!result.cropMismatch && result.isConfident && (
+                <DiseaseInfoCard className={result.className} />
               )}
             </>
+            
           )}
         </div>
       )}
