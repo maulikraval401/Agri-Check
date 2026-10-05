@@ -11,6 +11,7 @@ export interface DiseaseResult {
   confidence: number;
   isHealthy: boolean;
   isConfident: boolean;
+  cropMismatch: boolean;
   topPredictions: { className: string; confidence: number }[];
 }
 
@@ -78,7 +79,10 @@ function smoothResize(img: HTMLImageElement, size: number): HTMLCanvasElement {
   return out;
 }
 
-export async function detectDisease(imageSrc: string): Promise<DiseaseResult> {
+export async function detectDisease(
+  imageSrc: string,
+  cropFilter?: string | null,
+): Promise<DiseaseResult> {
   const [model, img] = await Promise.all([getModel(), loadImage(imageSrc)]);
   const canvas = smoothResize(img, IMG_SIZE);
 
@@ -98,10 +102,21 @@ export async function detectDisease(imageSrc: string): Promise<DiseaseResult> {
   const scores = Array.from(await probs.data());
   probs.dispose();
 
-  const ranked = scores
-    .map((score, i) => ({ label: DISEASE_LABELS[i], score }))
-    .sort((a, b) => b.score - a.score);
+  let pool = scores.map((score, i) => ({ label: DISEASE_LABELS[i] as string, score }));
+  let cropMismatch = false;
 
+  if (cropFilter) {
+    const inCrop = pool.filter((p) => p.label.startsWith(cropFilter + '_'));
+    const total = inCrop.reduce((s, p) => s + p.score, 0);
+    // Model ko is crop ki classes me 20% se kam yakeen hai = photo is crop ki nahi lagti
+    cropMismatch = total < 0.2;
+    pool = inCrop.map((p) => ({
+      label: p.label,
+      score: total > 0 ? p.score / total : 0,
+    }));
+  }
+
+  const ranked = pool.sort((a, b) => b.score - a.score);
   const top = ranked[0];
   const { crop, disease, isHealthy } = parseLabel(top.label);
 
@@ -112,9 +127,10 @@ export async function detectDisease(imageSrc: string): Promise<DiseaseResult> {
     confidence: top.score,
     isHealthy,
     isConfident: top.score >= 0.3,
+    cropMismatch,
     topPredictions: ranked.slice(0, 5).map((p) => ({
       className: p.label,
       confidence: p.score,
     })),
   };
-                                         }
+    }
