@@ -1,3 +1,4 @@
+import { AuthProvider } from '@/contexts/AuthContext';
 import FarmDashboard from '@/pages/FarmDashboard';
 import { readFarm } from '@/lib/farm-storage';
 import MyFarm from '@/pages/MyFarm';
@@ -1218,7 +1219,9 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <WouterRouter>
         <ErrorBoundary>
-          <AppContent />
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
         </ErrorBoundary>
       </WouterRouter>
     </QueryClientProvider>
