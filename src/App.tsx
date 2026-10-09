@@ -47,6 +47,8 @@ import WeatherPage from '@/pages/Weather';
 import MandiPage from '@/pages/Mandi';
 import SchemesPage from '@/pages/Schemes';
 import DiseasePage from '@/pages/Disease';
+import { AuthProvider } from '@/contexts/AuthContext';
+import LoginPage from '@/pages/Login';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Language } from '@/i18n/translations';
@@ -1107,6 +1109,9 @@ function AppContent() {
           </Route>
           <Route path="/mandi">
             <MandiPage />
+          </Route>
+          <Route path="/login">
+            <LoginPage />
           </Route>
           <Route path="/schemes">
             <SchemesPage />
