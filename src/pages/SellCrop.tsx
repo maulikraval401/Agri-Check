@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { ArrowLeft, Loader2, Share2, Copy, Check, AlertTriangle, Info, Camera, X } from 'lucide-react';
+import { ArrowLeft, Loader2, Share2, Copy, Check, AlertTriangle, Info, Camera, X, Upload } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { fetchMandiPrices } from '@/lib/mandi';
@@ -44,6 +44,7 @@ export default function SellCropPage() {
   const [price, setPrice] = useState('');
   const [readyDate, setReadyDate] = useState('');
   const [village, setVillage] = useState('');
+  const [district, setDistrict] = useState('');
   const [phone, setPhone] = useState('');
   const [note, setNote] = useState('');
 
@@ -54,6 +55,8 @@ export default function SellCropPage() {
   const [mandiPrices, setMandiPrices] = useState<number[]>([]);
   const [mandiLoading, setMandiLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [published, setPublished] = useState(false);
   const [error, setError] = useState('');
 
   // Login check
@@ -67,7 +70,7 @@ export default function SellCropPage() {
     }
   }, [user, authLoading, navigate]);
 
-  // Fetch mandi prices when crop changes
+  // Fetch mandi prices
   useEffect(() => {
     if (!crop) {
       setMandiPrices([]);
@@ -91,9 +94,7 @@ export default function SellCropPage() {
     ? mandiPrices[Math.floor(mandiPrices.length / 2)]
     : 0;
 
-  const priceDiff = price && medianPrice
-    ? Number(price) - medianPrice
-    : 0;
+  const priceDiff = price && medianPrice ? Number(price) - medianPrice : 0;
 
   const compareText = () => {
     if (!price || !medianPrice) return null;
@@ -110,12 +111,10 @@ export default function SellCropPage() {
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (file.size > 5 * 1024 * 1024) {
       setError('Photo 5 MB se kam honi chahiye');
       return;
     }
-
     setPhoto(file);
     setPhotoPreview(URL.createObjectURL(file));
     setError('');
@@ -128,22 +127,17 @@ export default function SellCropPage() {
 
   const uploadPhoto = async (): Promise<string | null> => {
     if (!photo || !user) return null;
-
     setUploading(true);
     try {
       const fileExt = photo.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-
       const { error: uploadError } = await supabase.storage
         .from('listing-photos')
         .upload(fileName, photo);
-
       if (uploadError) throw uploadError;
-
       const { data } = supabase.storage
         .from('listing-photos')
         .getPublicUrl(fileName);
-
       return data.publicUrl;
     } catch (err: any) {
       setError(err?.message || 'Photo upload nahi hui');
@@ -161,7 +155,7 @@ export default function SellCropPage() {
       `📦 Matra: ${quantity} ${UNIT}`,
       price ? `💰 Bhav: ₹${price}/${UNIT}` : '',
       readyDate ? `📅 Tayyar: ${readyDate}` : '',
-      village ? `📍 Jagah: ${village}` : '',
+      village ? `📍 Jagah: ${village}${district ? `, ${district}` : ''}` : '',
       phone ? `📞 Sampark: ${phone}` : '',
       note ? `📝 ${note}` : '',
       '',
@@ -172,23 +166,79 @@ export default function SellCropPage() {
     return lines.join('\n');
   };
 
+  // ============================================================
+  // PUBLISH TO DATABASE
+  // ============================================================
+  const handlePublish = async () => {
+    if (!crop || !quantity || !price || !district) {
+      setError('Fasal, matra, bhav aur district zaroori hai');
+      return;
+    }
+    if (!user) return;
+
+    setPublishing(true);
+    setError('');
+
+    try {
+      // Upload photo first (if any)
+      let photoUrl = '';
+      if (photo) {
+        const url = await uploadPhoto();
+        if (url) photoUrl = url;
+      }
+
+      // Insert listing into database
+      const { error: insertError } = await supabase
+        .from('listings')
+        .insert({
+          user_id: user.id,
+          crop,
+          quantity: Number(quantity),
+          unit: UNIT,
+          expected_price: Number(price),
+          ready_date: readyDate || null,
+          description: note || null,
+          photos: photoUrl ? [photoUrl] : [],
+          village: village || null,
+          district,
+          state: 'Gujarat',
+          status: 'active',
+        });
+
+      if (insertError) throw insertError;
+      setPublished(true);
+    } catch (err: any) {
+      setError(err?.message || 'Listing publish nahi hui');
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const resetForm = () => {
+    setCrop('');
+    setQuantity('');
+    setPrice('');
+    setReadyDate('');
+    setDistrict('');
+    setNote('');
+    setPhoto(null);
+    setPhotoPreview('');
+    setPublished(false);
+    setError('');
+  };
+
   const handleWhatsApp = async () => {
     if (!crop || !quantity) {
       setError('Fasal aur matra zaroori hai');
       return;
     }
-
     let photoUrl = '';
     if (photo) {
       const url = await uploadPhoto();
       if (url) photoUrl = url;
     }
-
     let msg = buildMessage();
-    if (photoUrl) {
-      msg += `\n\n📷 Photo: ${photoUrl}`;
-    }
-
+    if (photoUrl) msg += `\n\n📷 Photo: ${photoUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
@@ -197,18 +247,13 @@ export default function SellCropPage() {
       setError('Fasal aur matra zaroori hai');
       return;
     }
-
     let photoUrl = '';
     if (photo) {
       const url = await uploadPhoto();
       if (url) photoUrl = url;
     }
-
     let msg = buildMessage();
-    if (photoUrl) {
-      msg += `\n\n📷 Photo: ${photoUrl}`;
-    }
-
+    if (photoUrl) msg += `\n\n📷 Photo: ${photoUrl}`;
     try {
       await navigator.clipboard.writeText(msg);
       setCopied(true);
@@ -226,6 +271,46 @@ export default function SellCropPage() {
     );
   }
 
+  // ============================================================
+  // SUCCESS SCREEN
+  // ============================================================
+  if (published) {
+    return (
+      <div className="page-enter min-h-screen px-4 py-6">
+        <div className="mt-12 mx-auto max-w-md text-center">
+          <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-[#deeee9] text-[#28655e]">
+            <Check size={40} />
+          </div>
+          <h1 className="mt-6 text-2xl font-bold">✅ Listing Publish Ho Gayi!</h1>
+          <p className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
+            Ab buyers aapki fasal "Sabki Fasal" page pe dekh sakte hain.
+          </p>
+
+          <div className="mt-8 space-y-3">
+            <button
+              onClick={() => navigate('/listings')}
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-[hsl(var(--primary))] text-sm font-bold text-[hsl(var(--primary-foreground))]"
+            >
+              Sabki Fasal Dekho
+            </button>
+            <button
+              onClick={resetForm}
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl border border-[hsl(var(--border))] text-sm font-bold"
+            >
+              Nayi Listing Banao
+            </button>
+            <button
+              onClick={handleWhatsApp}
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] text-sm font-bold text-white"
+            >
+              <Share2 size={18} /> WhatsApp pe Share
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page-enter min-h-screen px-4 py-6 pb-24">
       <button
@@ -237,7 +322,7 @@ export default function SellCropPage() {
 
       <h1 className="mt-4 text-2xl font-bold">🌾 Fasal Becho</h1>
       <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
-        Apni fasal ki details bharo aur WhatsApp pe share karo
+        Apni fasal ki details bharo — buyers tak pahunchao
       </p>
 
       {error && (
@@ -283,7 +368,7 @@ export default function SellCropPage() {
 
         {/* Price */}
         <div>
-          <label className="text-sm font-bold">Aapka bhav (₹/quintal)</label>
+          <label className="text-sm font-bold">Aapka bhav (₹/quintal) *</label>
           <input
             type="number"
             inputMode="decimal"
@@ -338,16 +423,28 @@ export default function SellCropPage() {
           />
         </div>
 
-        {/* Village */}
-        <div>
-          <label className="text-sm font-bold">Gaon / Jagah</label>
-          <input
-            type="text"
-            value={village}
-            onChange={(e) => setVillage(e.target.value)}
-            placeholder="Rajkot"
-            className="mt-1 min-h-12 w-full rounded-xl border border-[hsl(var(--border))] px-3 text-sm outline-none"
-          />
+        {/* Village + District */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-sm font-bold">Gaon</label>
+            <input
+              type="text"
+              value={village}
+              onChange={(e) => setVillage(e.target.value)}
+              placeholder="Rajkot"
+              className="mt-1 min-h-12 w-full rounded-xl border border-[hsl(var(--border))] px-3 text-sm outline-none"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-bold">District *</label>
+            <input
+              type="text"
+              value={district}
+              onChange={(e) => setDistrict(e.target.value)}
+              placeholder="Rajkot"
+              className="mt-1 min-h-12 w-full rounded-xl border border-[hsl(var(--border))] px-3 text-sm outline-none"
+            />
+          </div>
         </div>
 
         {/* Phone */}
@@ -391,11 +488,7 @@ export default function SellCropPage() {
             </label>
           ) : (
             <div className="relative mt-1">
-              <img
-                src={photoPreview}
-                alt="Preview"
-                className="w-full rounded-xl"
-              />
+              <img src={photoPreview} alt="Preview" className="w-full rounded-xl" />
               <button
                 type="button"
                 onClick={removePhoto}
@@ -420,15 +513,32 @@ export default function SellCropPage() {
         </div>
       )}
 
-      {/* Buttons */}
-      <div className="mt-6 grid grid-cols-2 gap-3">
+      {/* PUBLISH BUTTON (Primary) */}
+      <button
+        onClick={handlePublish}
+        disabled={publishing || !crop || !quantity || !price || !district}
+        className="mt-6 flex min-h-16 w-full items-center justify-center gap-2 rounded-xl bg-[hsl(var(--primary))] text-base font-bold text-[hsl(var(--primary-foreground))] disabled:opacity-50"
+      >
+        {publishing ? (
+          <><Loader2 className="animate-spin" size={20} /> Publishing...</>
+        ) : (
+          <><Upload size={20} /> Publish Listing</>
+        )}
+      </button>
+
+      <p className="mt-2 text-center text-xs text-[hsl(var(--muted-foreground))]">
+        Listing "Sabki Fasal" page pe dikhegi
+      </p>
+
+      {/* Share buttons (Secondary) */}
+      <div className="mt-4 grid grid-cols-2 gap-3">
         <button
           onClick={handleWhatsApp}
           disabled={!crop || !quantity || uploading}
           className="flex min-h-14 items-center justify-center gap-2 rounded-xl bg-[#25D366] text-sm font-bold text-white disabled:opacity-50"
         >
           {uploading ? (
-            <><Loader2 className="animate-spin" size={18} /> Uploading...</>
+            <><Loader2 className="animate-spin" size={18} /> Wait...</>
           ) : (
             <><Share2 size={18} /> WhatsApp</>
           )}
@@ -464,4 +574,4 @@ export default function SellCropPage() {
       </div>
     </div>
   );
-         }
+    }
