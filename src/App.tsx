@@ -50,6 +50,7 @@ import DiseasePage from '@/pages/Disease';
 import { AuthProvider } from '@/contexts/AuthContext';
 import LoginPage from '@/pages/Login';
 import SellCropPage from '@/pages/SellCrop';
+import BrowseListingsPage from '@/pages/BrowseListings';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Language } from '@/i18n/translations';
@@ -1116,6 +1117,9 @@ function AppContent() {
           </Route>
           <Route path="/sell">
             <SellCropPage />
+          </Route>
+          <Route path="/listings">
+            <BrowseListingsPage />
           </Route>
           <Route path="/schemes">
             <SchemesPage />
