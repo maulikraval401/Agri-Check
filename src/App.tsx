@@ -1,4 +1,3 @@
-import { AuthProvider } from '@/contexts/AuthContext';
 import FarmDashboard from '@/pages/FarmDashboard';
 import { readFarm } from '@/lib/farm-storage';
 import MyFarm from '@/pages/MyFarm';
@@ -50,6 +49,7 @@ import SchemesPage from '@/pages/Schemes';
 import DiseasePage from '@/pages/Disease';
 import { AuthProvider } from '@/contexts/AuthContext';
 import LoginPage from '@/pages/Login';
+import SellCropPage from '@/pages/SellCrop';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Language } from '@/i18n/translations';
@@ -1113,6 +1113,9 @@ function AppContent() {
           </Route>
           <Route path="/login">
             <LoginPage />
+          </Route>
+          <Route path="/sell">
+            <SellCropPage />
           </Route>
           <Route path="/schemes">
             <SchemesPage />
