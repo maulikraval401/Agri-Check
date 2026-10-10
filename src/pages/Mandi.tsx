@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'wouter';
+import { ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { fetchMandiPrices, type MandiPrice } from '@/lib/mandi';
 import { translateCommodity } from '@/lib/commodity-translations';
@@ -26,6 +28,44 @@ export default function MandiPage() {
             : 'Gujarat ke aaj ke mandi bhav'}
       </p>
 
+      {/* Sell My Crop Button */}
+      <Link
+        href="/sell"
+        className="mt-4 flex items-center gap-3 rounded-[1.35rem] border border-[hsl(var(--primary)/.3)] bg-[hsl(var(--primary)/.08)] p-4 no-underline"
+      >
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xl">
+          🌾
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-bold text-[hsl(var(--foreground))]">
+            Fasal Becho
+          </p>
+          <p className="mt-0.5 text-xs text-[hsl(var(--muted-foreground))]">
+            Apni fasal listing daalo — WhatsApp pe share karo
+          </p>
+        </div>
+        <ArrowRight size={18} className="shrink-0 text-[hsl(var(--primary))]" />
+      </Link>
+
+      {/* Browse Listings Button */}
+      <Link
+        href="/listings"
+        className="mt-3 flex items-center gap-3 rounded-[1.35rem] border border-[hsl(var(--primary)/.3)] bg-[hsl(var(--primary)/.08)] p-4 no-underline"
+      >
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xl">
+          🛒
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-bold text-[hsl(var(--foreground))]">
+            Sabki Fasal Dekho
+          </p>
+          <p className="mt-0.5 text-xs text-[hsl(var(--muted-foreground))]">
+            Buyers ki listings — contact karo, kharido
+          </p>
+        </div>
+        <ArrowRight size={18} className="shrink-0 text-[hsl(var(--primary))]" />
+      </Link>
+
       {loading ? (
         <p className="mt-6 text-sm">Loading...</p>
       ) : prices.length === 0 ? (
@@ -34,7 +74,7 @@ export default function MandiPage() {
         </p>
       ) : (
         <>
-          <div className="mt-4 rounded-xl border border-[#e6c879] bg-[#fbf0c9] p-3 text-xs text-[#66511b]">
+          <div className="mt-6 rounded-xl border border-[#e6c879] bg-[#fbf0c9] p-3 text-xs text-[#66511b]">
             {language === 'gu'
               ? '🌾 કપાસ, મગફળી, ઘઉં — ઓક્ટોબર-ડિસેમ્બરમાં આવશે'
               : language === 'hi'
@@ -80,4 +120,4 @@ export default function MandiPage() {
       )}
     </div>
   );
-                    }
+}
