@@ -51,6 +51,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import LoginPage from '@/pages/Login';
 import SellCropPage from '@/pages/SellCrop';
 import BrowseListingsPage from '@/pages/BrowseListings';
+import MyListingsPage from '@/pages/MyListings';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Language } from '@/i18n/translations';
@@ -1120,6 +1121,9 @@ function AppContent() {
           </Route>
           <Route path="/listings">
             <BrowseListingsPage />
+          </Route>
+          <Route path="/my-listings">
+            <MyListingsPage />
           </Route>
           <Route path="/schemes">
             <SchemesPage />
