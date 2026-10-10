@@ -66,6 +66,25 @@ export default function MandiPage() {
         <ArrowRight size={18} className="shrink-0 text-[hsl(var(--primary))]" />
       </Link>
 
+      {/* My Listings Button */}
+      <Link
+        href="/my-listings"
+        className="mt-3 flex items-center gap-3 rounded-[1.35rem] border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 no-underline"
+      >
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[hsl(var(--muted))] text-xl">
+          📋
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-bold text-[hsl(var(--foreground))]">
+            Meri Listings
+          </p>
+          <p className="mt-0.5 text-xs text-[hsl(var(--muted-foreground))]">
+            Apni listings manage karo — sold mark, delete
+          </p>
+        </div>
+        <ArrowRight size={18} className="shrink-0 text-[hsl(var(--primary))]" />
+      </Link>
+
       {loading ? (
         <p className="mt-6 text-sm">Loading...</p>
       ) : prices.length === 0 ? (
@@ -120,4 +139,4 @@ export default function MandiPage() {
       )}
     </div>
   );
-}
+                }
