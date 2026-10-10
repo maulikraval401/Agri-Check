@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { ArrowLeft, Loader2, Share2, Copy, Check, AlertTriangle, Info } from 'lucide-react';
+import { ArrowLeft, Loader2, Share2, Copy, Check, AlertTriangle, Info, Camera, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { fetchMandiPrices } from '@/lib/mandi';
+import { supabase } from '@/lib/supabase';
 
 const CROPS = [
   { key: 'Cotton', emoji: '🌿' },
@@ -46,6 +47,10 @@ export default function SellCropPage() {
   const [village, setVillage] = useState('');
   const [phone, setPhone] = useState('');
   const [note, setNote] = useState('');
+
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>('');
+  const [uploading, setUploading] = useState(false);
 
   const [mandiPrices, setMandiPrices] = useState<number[]>([]);
   const [mandiLoading, setMandiLoading] = useState(false);
@@ -103,6 +108,52 @@ export default function SellCropPage() {
     return { text: '⚠️ Aapka bhav mandi se kam hai', color: 'text-orange-700' };
   };
 
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Photo 5 MB se kam honi chahiye');
+      return;
+    }
+
+    setPhoto(file);
+    setPhotoPreview(URL.createObjectURL(file));
+    setError('');
+  };
+
+  const removePhoto = () => {
+    setPhoto(null);
+    setPhotoPreview('');
+  };
+
+  const uploadPhoto = async (): Promise<string | null> => {
+    if (!photo || !user) return null;
+
+    setUploading(true);
+    try {
+      const fileExt = photo.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('listing-photos')
+        .upload(fileName, photo);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('listing-photos')
+        .getPublicUrl(fileName);
+
+      return data.publicUrl;
+    } catch (err: any) {
+      setError(err?.message || 'Photo upload nahi hui');
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const buildMessage = () => {
     const cropEmoji = CROPS.find((c) => c.key === crop)?.emoji || '🌾';
     const lines = [
@@ -122,13 +173,25 @@ export default function SellCropPage() {
     return lines.join('\n');
   };
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = async () => {
     if (!crop || !quantity) {
       setError('Fasal aur matra zaroori hai');
       return;
     }
-    const msg = encodeURIComponent(buildMessage());
-    window.open(`https://wa.me/?text=${msg}`, '_blank');
+
+    // Upload photo first if selected
+    let photoUrl = '';
+    if (photo) {
+      const url = await uploadPhoto();
+      if (url) photoUrl = url;
+    }
+
+    let msg = buildMessage();
+    if (photoUrl) {
+      msg += `\n\n📷 Photo: ${photoUrl}`;
+    }
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
   const handleCopy = async () => {
@@ -136,8 +199,20 @@ export default function SellCropPage() {
       setError('Fasal aur matra zaroori hai');
       return;
     }
+
+    let photoUrl = '';
+    if (photo) {
+      const url = await uploadPhoto();
+      if (url) photoUrl = url;
+    }
+
+    let msg = buildMessage();
+    if (photoUrl) {
+      msg += `\n\n📷 Photo: ${photoUrl}`;
+    }
+
     try {
-      await navigator.clipboard.writeText(buildMessage());
+      await navigator.clipboard.writeText(msg);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -309,6 +384,38 @@ export default function SellCropPage() {
             className="mt-1 w-full rounded-xl border border-[hsl(var(--border))] px-3 py-2 text-sm outline-none"
           />
         </div>
+
+        {/* Photo Upload */}
+        <div>
+          <label className="text-sm font-bold">Photo (optional)</label>
+          {!photoPreview ? (
+            <label className="mt-1 flex min-h-24 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[hsl(var(--border))] text-sm text-[hsl(var(--muted-foreground))]">
+              <Camera size={20} />
+              <span>Photo add karo (max 5 MB)</span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handlePhotoSelect}
+                className="hidden"
+              />
+            </label>
+          ) : (
+            <div className="relative mt-1">
+              <img
+                src={photoPreview}
+                alt="Preview"
+                className="w-full rounded-xl"
+              />
+              <button
+                type="button"
+                onClick={removePhoto}
+                className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/60 text-white"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Preview */}
@@ -327,14 +434,18 @@ export default function SellCropPage() {
       <div className="mt-6 grid grid-cols-2 gap-3">
         <button
           onClick={handleWhatsApp}
-          disabled={!crop || !quantity}
+          disabled={!crop || !quantity || uploading}
           className="flex min-h-14 items-center justify-center gap-2 rounded-xl bg-[#25D366] text-sm font-bold text-white disabled:opacity-50"
         >
-          <Share2 size={18} /> WhatsApp
+          {uploading ? (
+            <><Loader2 className="animate-spin" size={18} /> Uploading...</>
+          ) : (
+            <><Share2 size={18} /> WhatsApp</>
+          )}
         </button>
         <button
           onClick={handleCopy}
-          disabled={!crop || !quantity}
+          disabled={!crop || !quantity || uploading}
           className="flex min-h-14 items-center justify-center gap-2 rounded-xl border border-[hsl(var(--border))] text-sm font-bold disabled:opacity-50"
         >
           {copied ? <Check size={18} /> : <Copy size={18} />}
@@ -363,4 +474,4 @@ export default function SellCropPage() {
       </div>
     </div>
   );
-         }
+                }
