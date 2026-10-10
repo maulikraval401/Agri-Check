@@ -32,7 +32,7 @@ const CROPS = [
   { key: 'Castor', emoji: '🌿' },
 ];
 
-const UNITS = ['quintal', 'tonne', 'kg'];
+const UNIT = 'quintal';
 
 export default function SellCropPage() {
   const { language } = useLanguage();
@@ -41,7 +41,6 @@ export default function SellCropPage() {
 
   const [crop, setCrop] = useState('');
   const [quantity, setQuantity] = useState('');
-  const [unit, setUnit] = useState('quintal');
   const [price, setPrice] = useState('');
   const [readyDate, setReadyDate] = useState('');
   const [village, setVillage] = useState('');
@@ -159,14 +158,14 @@ export default function SellCropPage() {
     const lines = [
       `${cropEmoji} *${crop}* bechna hai`,
       '',
-      `📦 Matra: ${quantity} ${unit}`,
-      price ? `💰 Bhav: ₹${price}/${unit}` : '',
+      `📦 Matra: ${quantity} ${UNIT}`,
+      price ? `💰 Bhav: ₹${price}/${UNIT}` : '',
       readyDate ? `📅 Tayyar: ${readyDate}` : '',
       village ? `📍 Jagah: ${village}` : '',
       phone ? `📞 Sampark: ${phone}` : '',
       note ? `📝 ${note}` : '',
       '',
-      medianPrice ? `📊 Aaj mandi bhav: ~₹${medianPrice}/${unit}` : '',
+      medianPrice ? `📊 Aaj mandi bhav: ~₹${medianPrice}/${UNIT}` : '',
       '',
       `— Agri Check app se bheja`,
     ].filter(Boolean);
@@ -179,7 +178,6 @@ export default function SellCropPage() {
       return;
     }
 
-    // Upload photo first if selected
     let photoUrl = '';
     if (photo) {
       const url = await uploadPhoto();
@@ -267,42 +265,31 @@ export default function SellCropPage() {
           </select>
         </div>
 
-        {/* Quantity + Unit */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-sm font-bold">Matra *</label>
-            <input
-              type="number"
-              inputMode="decimal"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              placeholder="50"
-              className="mt-1 min-h-12 w-full rounded-xl border border-[hsl(var(--border))] px-3 text-sm outline-none"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-bold">Unit</label>
-            <select
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              className="mt-1 min-h-12 w-full rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 text-sm outline-none"
-            >
-              {UNITS.map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-          </div>
+        {/* Quantity */}
+        <div>
+          <label className="text-sm font-bold">Matra (quintal) *</label>
+          <input
+            type="number"
+            inputMode="decimal"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+            placeholder="50"
+            className="mt-1 min-h-12 w-full rounded-xl border border-[hsl(var(--border))] px-3 text-sm outline-none"
+          />
+          <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">
+            1 quintal = 100 kg
+          </p>
         </div>
 
         {/* Price */}
         <div>
-          <label className="text-sm font-bold">Aapka bhav (₹/{unit})</label>
+          <label className="text-sm font-bold">Aapka bhav (₹/quintal)</label>
           <input
             type="number"
             inputMode="decimal"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
-            placeholder="7500"
+            placeholder="7100"
             className="mt-1 min-h-12 w-full rounded-xl border border-[hsl(var(--border))] px-3 text-sm outline-none"
           />
         </div>
@@ -320,7 +307,10 @@ export default function SellCropPage() {
                   Aaj ka mandi bhav (median)
                 </p>
                 <p className="mt-1 text-lg font-bold">
-                  ₹{medianPrice.toFixed(0)}/{unit}
+                  ₹{medianPrice.toFixed(0)}/quintal
+                </p>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                  ≈ ₹{(medianPrice / 100).toFixed(1)}/kg
                 </p>
                 {compareText() && (
                   <p className={`mt-2 text-sm font-semibold ${compareText()?.color}`}>
@@ -474,4 +464,4 @@ export default function SellCropPage() {
       </div>
     </div>
   );
-                }
+         }
