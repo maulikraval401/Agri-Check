@@ -20,31 +20,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+  let mounted = true;
+
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    (event, session) => {
+      if (!mounted) return;
+      
       setSession(session);
       if (session?.user) {
         fetchUserProfile(session.user.id);
       } else {
+        setUser(null);
         setLoading(false);
       }
-    });
+    }
+  );
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        if (session?.user) {
-          await fetchUserProfile(session.user.id);
-        } else {
-          setUser(null);
-          setLoading(false);
-        }
-      }
-    );
+  // Initial session check
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (!mounted) return;
+    setSession(session);
+    if (session?.user) {
+      fetchUserProfile(session.user.id);
+    } else {
+      setLoading(false);
+    }
+  });
+
+  return () => {
+    mounted = false;
+    subscription.unsubscribe();
+  };
+}, []);
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = async (userId: string, retries = 3) => {
+  try {
     const { data, error } = await supabase
       .from('users')
       .select('*')
@@ -53,9 +66,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!error && data) {
       setUser(data);
+      setLoading(false);
+      return;
     }
-    setLoading(false);
-  };
+
+    // Retry if profile row not yet created by trigger
+    if (retries > 0) {
+      setTimeout(() => fetchUserProfile(userId, retries - 1), 500);
+    } else {
+      // Give up after 3 retries — assume profile issue
+      setLoading(false);
+    }
+  } catch {
+    if (retries > 0) {
+      setTimeout(() => fetchUserProfile(userId, retries - 1), 500);
+    } else {
+      setLoading(false);
+    }
+  }
+};
 
   const sendOtp = async (phone: string) => {
     const { error } = await supabase.auth.signInWithOtp({
