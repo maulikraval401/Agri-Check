@@ -119,18 +119,26 @@ export default function MyListingsPage() {
 
   return (
     <div className="page-enter min-h-screen px-4 py-6 pb-24">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="eyebrow">10 / my listings</p>
-          <h1 className="mt-2 text-2xl font-bold">🌾 Meri Fasal</h1>
-        </div>
-        <Link
-          href="/sell"
-          className="flex items-center gap-1 rounded-xl bg-[hsl(var(--primary))] px-3 py-2 text-xs font-bold text-[hsl(var(--primary-foreground))] no-underline"
-        >
-          <Plus size={14} /> Nayi
-        </Link>
-      </div>
+     <div className="flex items-center justify-between">
+  <div>
+    <p className="eyebrow">10 / my listings</p>
+    <h1 className="mt-2 text-2xl font-bold">🌾 Meri Fasal</h1>
+  </div>
+  <div className="flex items-center gap-2">
+    <Link
+      href="/profile"
+      className="flex items-center gap-1 rounded-xl border border-[hsl(var(--border))] px-3 py-2 text-xs font-bold no-underline"
+    >
+      👤 Profile
+    </Link>
+    <Link
+      href="/sell"
+      className="flex items-center gap-1 rounded-xl bg-[hsl(var(--primary))] px-3 py-2 text-xs font-bold text-[hsl(var(--primary-foreground))] no-underline"
+    >
+      <Plus size={14} /> Nayi
+    </Link>
+  </div>
+</div> 
 
       <p className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
         {listings.length} listings — {listings.filter((l) => l.status === 'active').length} active
