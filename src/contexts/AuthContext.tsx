@@ -20,71 +20,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-  let mounted = true;
+    let mounted = true;
 
-  const { data: { subscription } } = supabase.auth.onAuthStateChange(
-    (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!mounted) return;
+
+        setSession(session);
+        if (session?.user) {
+          fetchUserProfile(session.user.id);
+        } else {
+          setUser(null);
+          setLoading(false);
+        }
+      }
+    );
+
+    // Initial session check
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
-      
       setSession(session);
       if (session?.user) {
         fetchUserProfile(session.user.id);
       } else {
-        setUser(null);
         setLoading(false);
       }
-    }
-  );
+    });
 
-  // Initial session check
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    if (!mounted) return;
-    setSession(session);
-    if (session?.user) {
-      fetchUserProfile(session.user.id);
-    } else {
-      setLoading(false);
-    }
-  });
-
-  return () => {
-    mounted = false;
-    subscription.unsubscribe();
-  };
-}, []);
-
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchUserProfile = async (userId: string, retries = 3) => {
-  try {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-    if (!error && data) {
-      setUser(data);
-      setLoading(false);
-      return;
-    }
+      if (!error && data) {
+        setUser(data);
+        setLoading(false);
+        return;
+      }
 
-    // Retry if profile row not yet created by trigger
-    if (retries > 0) {
-      setTimeout(() => fetchUserProfile(userId, retries - 1), 500);
-    } else {
-      // Give up after 3 retries — assume profile issue
-      setLoading(false);
+      // Retry if profile row not yet created by trigger
+      if (retries > 0) {
+        setTimeout(() => fetchUserProfile(userId, retries - 1), 500);
+      } else {
+        setLoading(false);
+      }
+    } catch {
+      if (retries > 0) {
+        setTimeout(() => fetchUserProfile(userId, retries - 1), 500);
+      } else {
+        setLoading(false);
+      }
     }
-  } catch {
-    if (retries > 0) {
-      setTimeout(() => fetchUserProfile(userId, retries - 1), 500);
-    } else {
-      setLoading(false);
-    }
-  }
-};
+  };
 
   const sendOtp = async (phone: string) => {
     const { error } = await supabase.auth.signInWithOtp({
@@ -139,4 +135,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within AuthProvider');
   }
   return context;
-      }
+}
