@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLocation } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { Phone, Loader2, ArrowLeft, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -9,10 +9,10 @@ export default function LoginPage() {
   const [, navigate] = useLocation();
   const { sendOtp, verifyOtp } = useAuth();
 
-  const [step, setStep] = useState<'phone' | 'otp' | 'name'>('phone');
+  const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
-  const [name, setName] = useState('');
+  const [consent, setConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -57,30 +57,45 @@ export default function LoginPage() {
       pa: 'ਪੁਸ਼ਟੀ ਕਰੋ',
       ta: 'சரிபார்',
     },
-    nameLabel: {
-      en: 'Your Name',
-      gu: 'તમારું નામ',
-      hi: 'आपका नाम',
-      mr: 'तुमचे नाव',
-      pa: 'ਤੁਹਾਡਾ ਨਾਮ',
-      ta: 'உங்கள் பெயர்',
+    testHint: {
+      en: 'For testing: use 9999999999 with OTP 123456',
+      gu: 'ટેસ્ટિંગ માટે: 9999999999 વાપરો, OTP 123456',
+      hi: 'टेस्टिंग के लिए: 9999999999, OTP 123456',
+      mr: 'टेस्टिंगसाठी: 9999999999, OTP 123456',
+      pa: 'ਟੈਸਟ ਲਈ: 9999999999, OTP 123456',
+      ta: 'சோதனைக்கு: 9999999999, OTP 123456',
     },
-    save: {
-      en: 'Save & Continue',
-      gu: 'સાચવો અને આગળ વધો',
-      hi: 'सहेजें और जारी रखें',
-      mr: 'जतन करा',
-      pa: 'ਸੇਵ ਕਰੋ',
-      ta: 'சேமி',
+    consentText: {
+      en: 'I agree to the Privacy Policy and Terms. My phone number and name will be securely stored.',
+      gu: 'હું ગોપનીયતા નીતિ અને શરતોથી સહમત છું. મારો મોબાઇલ નંબર અને નામ સુરક્ષિત રીતે સંગ્રહિત થશે.',
+      hi: 'मैं गोपनीयता नीति और शर्तों से सहमत हूं। मेरा मोबाइल नंबर और नाम सुरक्षित रूप से संग्रहीत होगा।',
+      mr: 'मी गोपनीयता धोरण आणि अटींशी सहमत आहे. माझा मोबाइल नंबर आणि नाव सुरक्षितपणे संग्रहित केले जाईल.',
+      pa: 'ਮੈਂ ਪਰਦੇਦਾਰੀ ਨੀਤੀ ਅਤੇ ਸ਼ਰਤਾਂ ਨਾਲ ਸਹਿਮਤ ਹਾਂ। ਮੇਰਾ ਮੋਬਾਈਲ ਨੰਬਰ ਅਤੇ ਨਾਮ ਸੁਰੱਖਿਅਤ ਢੰਗ ਨਾਲ ਸਟੋਰ ਕੀਤਾ ਜਾਵੇਗਾ।',
+      ta: 'நான் தனியுரிமைக் கொள்கை மற்றும் விதிமுறைகளை ஏற்கிறேன். எனது மொபைல் எண் மற்றும் பெயர் பாதுகாப்பாக சேமிக்கப்படும்.',
     },
-    
-    privacy: {
-      en: 'By continuing, you agree to our Privacy Policy and Terms of Use.',
-      gu: 'ચાલુ રાખીને, તમે અમારી ગોપનીયતા નીતિ સ્વીકારો છો.',
-      hi: 'जारी रखकर, आप हमारी गोपनीयता नीति से सहमत हैं।',
-      mr: 'सुरू ठेवून, तुम्ही गोपनीयता धोरण स्वीकारता.',
-      pa: 'ਜਾਰੀ ਰੱਖ ਕੇ, ਤੁਸੀਂ ਸਾਡੀ ਪਰਦੇਦਾਰੀ ਨੀਤੀ ਨਾਲ ਸਹਿਮਤ ਹੋ।',
-      ta: 'தொடர்வதன் மூலம், எங்கள் தனியுரிமைக் கொள்கையை ஏற்கிறீர்கள்.',
+    privacyLink: {
+      en: 'Privacy Policy',
+      gu: 'ગોપનીયતા નીતિ',
+      hi: 'गोपनीयता नीति',
+      mr: 'गोपनीयता धोरण',
+      pa: 'ਪਰਦੇਦਾਰੀ ਨੀਤੀ',
+      ta: 'தனியுரிமைக் கொள்கை',
+    },
+    and: {
+      en: 'and',
+      gu: 'અને',
+      hi: 'और',
+      mr: 'आणि',
+      pa: 'ਅਤੇ',
+      ta: 'மற்றும்',
+    },
+    terms: {
+      en: 'Terms',
+      gu: 'શરતો',
+      hi: 'शर्तें',
+      mr: 'अटी',
+      pa: 'ਸ਼ਰਤਾਂ',
+      ta: 'விதிமுறைகள்',
     },
   } as const;
 
@@ -89,6 +104,10 @@ export default function LoginPage() {
     const cleanPhone = phone.replace(/\D/g, '');
     if (cleanPhone.length !== 10) {
       setError('10 digit ka number daalo');
+      return;
+    }
+    if (!consent) {
+      setError('Privacy Policy se sehmat ho');
       return;
     }
 
@@ -158,9 +177,32 @@ export default function LoginPage() {
               />
             </div>
 
+            {/* CONSENT CHECKBOX */}
+            <label className="mt-4 flex items-start gap-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                className="mt-1 h-5 w-5 shrink-0 cursor-pointer accent-[hsl(var(--primary))]"
+              />
+              <span className="text-xs leading-relaxed">
+                {t.consentText[language].split('Privacy Policy')[0]}
+                <Link
+                  href="/privacy"
+                  className="font-bold text-[hsl(var(--primary))] underline"
+                >
+                  {t.privacyLink[language]}
+                </Link>
+                {' '}{t.and[language]}{' '}
+                <span className="font-bold text-[hsl(var(--primary))] underline">
+                  {t.terms[language]}
+                </span>
+              </span>
+            </label>
+
             <button
               onClick={handleSendOtp}
-              disabled={loading || phone.length !== 10}
+              disabled={loading || phone.length !== 10 || !consent}
               className="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-[hsl(var(--primary))] text-sm font-bold text-[hsl(var(--primary-foreground))] disabled:opacity-50"
             >
               {loading ? (
@@ -172,12 +214,12 @@ export default function LoginPage() {
               )}
             </button>
 
-           {import.meta.env.DEV && (
-  <div className="mt-4 rounded-xl border border-[#e6c879] bg-[#fbf0c9] p-3 text-xs text-[#66511b]">
-    <p className="font-bold">🧪 Testing mode:</p>
-    <p className="mt-1">{t.testHint[language]}</p>
-  </div>
-)} 
+            {import.meta.env.DEV && (
+              <div className="mt-4 rounded-xl border border-[#e6c879] bg-[#fbf0c9] p-3 text-xs text-[#66511b]">
+                <p className="font-bold">🧪 Testing mode:</p>
+                <p className="mt-1">{t.testHint[language]}</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -233,7 +275,9 @@ export default function LoginPage() {
 
         <div className="mt-6 flex items-start gap-2 rounded-xl border border-[hsl(var(--border))] p-3 text-xs text-[hsl(var(--muted-foreground))]">
           <Shield size={16} className="mt-0.5 shrink-0" />
-          <p>{t.privacy[language]}</p>
+          <p>
+            Aapka data surakshit hai. <Link href="/privacy" className="font-bold underline">Privacy Policy</Link> padho.
+          </p>
         </div>
       </div>
     </div>
