@@ -73,14 +73,7 @@ export default function LoginPage() {
       pa: 'ਸੇਵ ਕਰੋ',
       ta: 'சேமி',
     },
-    testHint: {
-      en: 'For testing: use 9999999999 with OTP 123456',
-      gu: 'ટેસ્ટિંગ માટે: 9999999999 વાપરો, OTP 123456',
-      hi: 'टेस्टिंग के लिए: 9999999999, OTP 123456',
-      mr: 'टेस्टिंगसाठी: 9999999999, OTP 123456',
-      pa: 'ਟੈਸਟ ਲਈ: 9999999999, OTP 123456',
-      ta: 'சோதனைக்கு: 9999999999, OTP 123456',
-    },
+    
     privacy: {
       en: 'By continuing, you agree to our Privacy Policy and Terms of Use.',
       gu: 'ચાલુ રાખીને, તમે અમારી ગોપનીયતા નીતિ સ્વીકારો છો.',
@@ -179,10 +172,12 @@ export default function LoginPage() {
               )}
             </button>
 
-            <div className="mt-4 rounded-xl border border-[#e6c879] bg-[#fbf0c9] p-3 text-xs text-[#66511b]">
-              <p className="font-bold">🧪 Testing mode:</p>
-              <p className="mt-1">{t.testHint[language]}</p>
-            </div>
+           {import.meta.env.DEV && (
+  <div className="mt-4 rounded-xl border border-[#e6c879] bg-[#fbf0c9] p-3 text-xs text-[#66511b]">
+    <p className="font-bold">🧪 Testing mode:</p>
+    <p className="mt-1">{t.testHint[language]}</p>
+  </div>
+)} 
           </div>
         )}
 
