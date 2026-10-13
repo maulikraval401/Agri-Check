@@ -30,28 +30,31 @@ export default function BrowseListingsPage() {
   }, []);
 
   const fetchListings = async () => {
-    setLoading(true);
-    try {
-      const { data, error: fetchError } = await supabase
-        .from('listings')
-        .select(`
-          *,
-          users:user_id (
-            name,
-            average_rating
-          )
-        `)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
+  setLoading(true);
+  try {
+    const now = new Date().toISOString();
+    const { data, error: fetchError } = await supabase
+      .from('listings')
+      .select(`
+        *,
+        users:user_id (
+          name,
+          average_rating
+        )
+      `)
+      .eq('status', 'active')
+      .gt('expires_at', now)
+      .order('created_at', { ascending: false });
 
-      if (fetchError) throw fetchError;
-      setListings(data || []);
-    } catch (err: any) {
-      setError(err?.message || 'Listings load nahi hui');
-    } finally {
-      setLoading(false);
-    }
-  };
+    if (fetchError) throw fetchError;
+    setListings(data || []);
+  } catch (err: any) {
+    setError(err?.message || 'Listings load nahi hui');
+  } finally {
+    setLoading(false);
+  }
+};
+  
 
   const filteredListings = listings.filter((l) => {
     if (searchCrop && !l.crop.toLowerCase().includes(searchCrop.toLowerCase())) {
