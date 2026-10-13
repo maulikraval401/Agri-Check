@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'wouter';
-import { Loader2, Search, MapPin, Phone, User, Calendar, Eye, AlertCircle } from 'lucide-react';
+import { Link, useLocation } from 'wouter';
+import { Loader2, Search, MapPin, Phone, User, Calendar, AlertCircle } from 'lucide-react';
 import { supabase, type Listing } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -13,9 +13,11 @@ interface ListingWithUser extends Listing {
 
 export default function BrowseListingsPage() {
   const { user } = useAuth();
+  const [, navigate] = useLocation();
   const [listings, setListings] = useState<ListingWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [contacting, setContacting] = useState<string | null>(null);
 
   // Filters
   const [searchCrop, setSearchCrop] = useState('');
@@ -80,37 +82,53 @@ export default function BrowseListingsPage() {
     return d.toLocaleDateString('en-IN');
   };
 
+  // ============================================================
+  // SECURE CONTACT — Uses RPC function
+  // ============================================================
   const handleContact = async (listing: ListingWithUser) => {
     if (!user) {
-      window.location.href = '/login';
+      navigate('/login');
       return;
     }
 
-    // Save interest to database
+    setContacting(listing.id);
     try {
-      await supabase.from('interests').insert({
-        listing_id: listing.id,
-        buyer_id: user.id,
+      // Call secure RPC — records interest + returns seller phone
+      const { data, error: rpcError } = await supabase.rpc('get_listing_contact', {
+        p_listing_id: listing.id,
       });
-    } catch {
-      // Ignore duplicate errors
+
+      if (rpcError) {
+        if (rpcError.message.includes('your own listing')) {
+          alert('Apni hi listing pe contact nahi kar sakte');
+        } else if (rpcError.message.includes('not active')) {
+          alert('Ye listing ab active nahi hai');
+        } else if (rpcError.message.includes('Login required')) {
+          navigate('/login');
+        } else {
+          alert(rpcError.message || 'Contact nahi hua');
+        }
+        return;
+      }
+
+      const seller = data?.[0];
+      if (!seller?.phone) {
+        alert('Seller ka phone number nahi mila');
+        return;
+      }
+
+      // Build WhatsApp message
+      const message = `Namaste ${seller.seller_name || 'bhai'},\n\nAgri Check pe aapki *${listing.crop}* listing dekhi.\n${listing.quantity} quintal ₹${listing.expected_price}/quintal me chahiye.\n\n— Agri Check app se`;
+
+      window.open(
+        `https://wa.me/91${seller.phone}?text=${encodeURIComponent(message)}`,
+        '_blank'
+      );
+    } catch (err: any) {
+      alert(err?.message || 'Contact nahi hua');
+    } finally {
+      setContacting(null);
     }
-
-    // Get seller phone from users table
-    const { data: sellerData } = await supabase
-      .from('users')
-      .select('phone')
-      .eq('id', listing.user_id)
-      .single();
-
-    if (!sellerData?.phone) {
-      alert('Seller ka phone number nahi mila');
-      return;
-    }
-
-    // Open WhatsApp or phone
-    const message = `Namaste ${listing.users?.name || 'bhai'},\n\nAgri Check pe aapki *${listing.crop}* listing dekhi.\n${listing.quantity} quintal ₹${listing.expected_price}/quintal me chahiye.\n\n— Agri Check app se`;
-    window.open(`https://wa.me/91${sellerData.phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   if (loading) {
@@ -192,76 +210,91 @@ export default function BrowseListingsPage() {
           </div>
         )}
 
-        {filteredListings.map((listing) => (
-          <div
-            key={listing.id}
-            className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4"
-          >
-            <div className="flex gap-3">
-              {/* Photo */}
-              {listing.photos?.[0] ? (
-                <img
-                  src={listing.photos[0]}
-                  alt={listing.crop}
-                  className="h-20 w-20 shrink-0 rounded-lg object-cover"
-                />
-              ) : (
-                <div className="grid h-20 w-20 shrink-0 place-items-center rounded-lg bg-[hsl(var(--muted))] text-3xl">
-                  🌾
-                </div>
-              )}
+        {filteredListings.map((listing) => {
+          const isOwnListing = listing.user_id === user?.id;
 
-              {/* Info */}
-              <div className="min-w-0 flex-1">
-                <h3 className="text-base font-bold">{listing.crop}</h3>
-                <p className="mt-1 text-sm font-semibold text-[hsl(var(--primary))]">
-                  ₹{listing.expected_price}/quintal
-                </p>
-                <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">
-                  {listing.quantity} quintal • {formatDate(listing.created_at)}
-                </p>
-                <p className="mt-1 flex items-center gap-1 text-xs text-[hsl(var(--muted-foreground))]">
-                  <MapPin size={12} />
-                  {listing.village ? `${listing.village}, ` : ''}{listing.district}
-                </p>
-              </div>
-            </div>
-
-            {/* Seller info */}
-            <div className="mt-3 flex items-center justify-between border-t border-[hsl(var(--border))] pt-3">
-              <div className="flex items-center gap-2 text-xs">
-                <User size={14} className="text-[hsl(var(--muted-foreground))]" />
-                <span className="font-semibold">{listing.users?.name || 'Farmer'}</span>
-                {listing.users?.average_rating ? (
-                  <span className="text-[hsl(var(--muted-foreground))]">
-                    ⭐ {listing.users.average_rating.toFixed(1)}
-                  </span>
-                ) : null}
-              </div>
-              {listing.ready_date && (
-                <div className="flex items-center gap-1 text-xs text-[hsl(var(--muted-foreground))]">
-                  <Calendar size={12} />
-                  {new Date(listing.ready_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                </div>
-              )}
-            </div>
-
-            {listing.description && (
-              <p className="mt-2 rounded-lg bg-[hsl(var(--muted))] p-2 text-xs">
-                📝 {listing.description}
-              </p>
-            )}
-
-            {/* Contact Button */}
-            <button
-              onClick={() => handleContact(listing)}
-              className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[hsl(var(--primary))] text-sm font-bold text-[hsl(var(--primary-foreground))]"
+          return (
+            <div
+              key={listing.id}
+              className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4"
             >
-              <Phone size={16} /> Contact Karo
-            </button>
-          </div>
-        ))}
+              <div className="flex gap-3">
+                {/* Photo */}
+                {listing.photos?.[0] ? (
+                  <img
+                    src={listing.photos[0]}
+                    alt={listing.crop}
+                    className="h-20 w-20 shrink-0 rounded-lg object-cover"
+                  />
+                ) : (
+                  <div className="grid h-20 w-20 shrink-0 place-items-center rounded-lg bg-[hsl(var(--muted))] text-3xl">
+                    🌾
+                  </div>
+                )}
+
+                {/* Info */}
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base font-bold">{listing.crop}</h3>
+                  <p className="mt-1 text-sm font-semibold text-[hsl(var(--primary))]">
+                    ₹{listing.expected_price}/quintal
+                  </p>
+                  <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">
+                    {listing.quantity} quintal • {formatDate(listing.created_at)}
+                  </p>
+                  <p className="mt-1 flex items-center gap-1 text-xs text-[hsl(var(--muted-foreground))]">
+                    <MapPin size={12} />
+                    {listing.village ? `${listing.village}, ` : ''}{listing.district}
+                  </p>
+                </div>
+              </div>
+
+              {/* Seller info */}
+              <div className="mt-3 flex items-center justify-between border-t border-[hsl(var(--border))] pt-3">
+                <div className="flex items-center gap-2 text-xs">
+                  <User size={14} className="text-[hsl(var(--muted-foreground))]" />
+                  <span className="font-semibold">{listing.users?.name || 'Farmer'}</span>
+                  {listing.users?.average_rating ? (
+                    <span className="text-[hsl(var(--muted-foreground))]">
+                      ⭐ {listing.users.average_rating.toFixed(1)}
+                    </span>
+                  ) : null}
+                </div>
+                {listing.ready_date && (
+                  <div className="flex items-center gap-1 text-xs text-[hsl(var(--muted-foreground))]">
+                    <Calendar size={12} />
+                    {new Date(listing.ready_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                  </div>
+                )}
+              </div>
+
+              {listing.description && (
+                <p className="mt-2 rounded-lg bg-[hsl(var(--muted))] p-2 text-xs">
+                  📝 {listing.description}
+                </p>
+              )}
+
+              {/* Contact Button OR Own Listing Badge */}
+              {isOwnListing ? (
+                <div className="mt-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))] p-3 text-center text-xs font-bold text-[hsl(var(--muted-foreground))]">
+                  👤 Ye aapki hi listing hai
+                </div>
+              ) : (
+                <button
+                  onClick={() => handleContact(listing)}
+                  disabled={contacting === listing.id}
+                  className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[hsl(var(--primary))] text-sm font-bold text-[hsl(var(--primary-foreground))] disabled:opacity-50"
+                >
+                  {contacting === listing.id ? (
+                    <><Loader2 className="animate-spin" size={16} /> Contact ho raha...</>
+                  ) : (
+                    <><Phone size={16} /> Contact Karo</>
+                  )}
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
-}
+      }
