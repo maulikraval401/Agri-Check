@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'wouter';
-import { Loader2, Search, MapPin, Phone, User, Calendar, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Loader2, Search, MapPin, Phone, User, Calendar, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { supabase, type Listing } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -173,8 +173,15 @@ export default function BrowseListingsPage() {
   }
 
   return (
-    <div className="page-enter min-h-screen px-4 py-6 pb-24">
-      <p className="eyebrow">09 / listings</p>
+  <div className="page-enter min-h-screen px-4 py-6 pb-24">
+    <button
+      onClick={() => navigate('/mandi')}
+      className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))]"
+    >
+      <ArrowLeft size={18} /> Back
+    </button>
+
+    <p className="eyebrow mt-4">09 / listings</p>
       <h1 className="mt-2 text-2xl font-bold tracking-tight">🛒 Sabki Fasal</h1>
       <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
         {filteredListings.length} listings mili
