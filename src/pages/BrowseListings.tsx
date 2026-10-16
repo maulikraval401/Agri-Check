@@ -123,10 +123,12 @@ export default function BrowseListingsPage() {
       // Build WhatsApp message
       const message = `Namaste ${seller.seller_name || 'bhai'},\n\nAgri Check pe aapki *${listing.crop}* listing dekhi.\n${listing.quantity} quintal ₹${listing.expected_price}/quintal me chahiye.\n\n— Agri Check app se`;
 
-      window.open(
-        `https://wa.me/91${seller.phone}?text=${encodeURIComponent(message)}`,
-        '_blank'
-      );
+      // Strip country code if already present
+const cleanPhone = seller.phone.replace(/^\+?91/, '').replace(/\D/g, '');
+window.open(
+  `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(message)}`,
+  '_blank'
+);
     } catch (err: any) {
       alert(err?.message || 'Contact nahi hua');
     } finally {
