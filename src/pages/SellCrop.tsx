@@ -34,7 +34,7 @@ const CROPS = [
 
 const UNIT = 'quintal';
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 export default function SellCropPage() {
   const { language } = useLanguage();
@@ -51,8 +51,8 @@ export default function SellCropPage() {
   const [note, setNote] = useState('');
 
   const [photo, setPhoto] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string>('');
-  const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string>('');
+  const [photoPreview, setPhotoPreview] = useState('');
+  const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState('');
   const [uploading, setUploading] = useState(false);
 
   const [mandiPrices, setMandiPrices] = useState<number[]>([]);
@@ -62,7 +62,6 @@ export default function SellCropPage() {
   const [published, setPublished] = useState(false);
   const [error, setError] = useState('');
 
-  // Login check
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/login');
@@ -73,7 +72,6 @@ export default function SellCropPage() {
     }
   }, [user, authLoading, navigate]);
 
-  // Fetch mandi prices
   useEffect(() => {
     if (!crop) {
       setMandiPrices([]);
@@ -93,11 +91,11 @@ export default function SellCropPage() {
       .finally(() => setMandiLoading(false));
   }, [crop]);
 
-  const medianPrice = mandiPrices.length
-    ? mandiPrices[mandiPrices.length % 2 === 0
-        ? mandiPrices.length / 2
-        : Math.floor(mandiPrices.length / 2)]
-    : 0;
+  let medianPrice = 0;
+  if (mandiPrices.length > 0) {
+    const mid = Math.floor(mandiPrices.length / 2);
+    medianPrice = mandiPrices[mid];
+  }
 
   const priceDiff = price && medianPrice ? Number(price) - medianPrice : 0;
 
@@ -113,21 +111,16 @@ export default function SellCropPage() {
     return { text: '⚠️ Aapka bhav mandi se kam hai', color: 'text-orange-700' };
   };
 
-  // ============================================================
-  // PHOTO HANDLING
-  // ============================================================
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // 1. File type check
     if (!ALLOWED_TYPES.includes(file.type.toLowerCase())) {
       setError('Sirf JPG, PNG, ya WebP photo allow hai');
       e.target.value = '';
       return;
     }
 
-    // 2. File size check
     if (file.size > MAX_FILE_SIZE) {
       setError('Photo 5 MB se kam honi chahiye');
       e.target.value = '';
@@ -136,7 +129,7 @@ export default function SellCropPage() {
 
     setPhoto(file);
     setPhotoPreview(URL.createObjectURL(file));
-    setUploadedPhotoUrl(''); // Reset uploaded URL for new photo
+    setUploadedPhotoUrl('');
     setError('');
   };
 
@@ -146,19 +139,14 @@ export default function SellCropPage() {
     setUploadedPhotoUrl('');
   };
 
-  // ============================================================
-  // UPLOAD PHOTO (with caching — no re-upload)
-  // ============================================================
   const uploadPhoto = async (): Promise<string | null> => {
-    // If already uploaded, return cached URL
     if (uploadedPhotoUrl) return uploadedPhotoUrl;
-
     if (!photo || !user) return null;
 
     setUploading(true);
     try {
       const fileExt = photo.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const fileName = user.id + '/' + Date.now() + '.' + fileExt;
 
       const { error: uploadError } = await supabase.storage
         .from('listing-photos')
@@ -184,27 +172,25 @@ export default function SellCropPage() {
   };
 
   const buildMessage = () => {
-    const cropEmoji = CROPS.find((c) => c.key === crop)?.emoji || '🌾';
+    const found = CROPS.find((c) => c.key === crop);
+    const cropEmoji = found ? found.emoji : '🌾';
     const lines = [
-      `${cropEmoji} *${crop}* bechna hai`,
+      cropEmoji + ' *' + crop + '* bechna hai',
       '',
-      `📦 Matra: ${quantity} ${UNIT}`,
-      price ? `💰 Bhav: ₹${price}/${UNIT}` : '',
-      readyDate ? `📅 Tayyar: ${readyDate}` : '',
-      village ? `📍 Jagah: ${village}${district ? `, ${district}` : ''}` : '',
-      phone ? `📞 Sampark: ${phone}` : '',
-      note ? `📝 ${note}` : '',
+      '📦 Matra: ' + quantity + ' ' + UNIT,
+      price ? '💰 Bhav: ₹' + price + '/' + UNIT : '',
+      readyDate ? '📅 Tayyar: ' + readyDate : '',
+      village ? '📍 Jagah: ' + village + (district ? ', ' + district : '') : '',
+      phone ? '📞 Sampark: ' + phone : '',
+      note ? '📝 ' + note : '',
       '',
-      medianPrice ? `📊 Aaj mandi bhav: ~₹${medianPrice}/${UNIT}` : '',
+      medianPrice ? '📊 Aaj mandi bhav: ~₹' + medianPrice + '/' + UNIT : '',
       '',
-      `— Agri Check app se bheja`,
+      '— Agri Check app se bheja',
     ].filter(Boolean);
     return lines.join('\n');
   };
 
-  // ============================================================
-  // PUBLISH TO DATABASE
-  // ============================================================
   const handlePublish = async () => {
     if (!crop || !quantity || !price || !district) {
       setError('Fasal, matra, bhav aur district zaroori hai');
@@ -216,7 +202,6 @@ export default function SellCropPage() {
     setError('');
 
     try {
-      // Upload photo first (if any) — will use cached URL if available
       let photoUrl = '';
       if (photo) {
         const url = await uploadPhoto();
@@ -227,7 +212,7 @@ export default function SellCropPage() {
         .from('listings')
         .insert({
           user_id: user.id,
-          crop,
+          crop: crop,
           quantity: Number(quantity),
           unit: UNIT,
           expected_price: Number(price),
@@ -235,7 +220,7 @@ export default function SellCropPage() {
           description: note || null,
           photos: photoUrl ? [photoUrl] : [],
           village: village || null,
-          district,
+          district: district,
           state: 'Gujarat',
           status: 'active',
         });
@@ -274,8 +259,8 @@ export default function SellCropPage() {
       if (url) photoUrl = url;
     }
     let msg = buildMessage();
-    if (photoUrl) msg += `\n\n📷 Photo: ${photoUrl}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    if (photoUrl) msg += '\n\n📷 Photo: ' + photoUrl;
+    window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
   };
 
   const handleCopy = async () => {
@@ -289,7 +274,7 @@ export default function SellCropPage() {
       if (url) photoUrl = url;
     }
     let msg = buildMessage();
-    if (photoUrl) msg += `\n\n📷 Photo: ${photoUrl}`;
+    if (photoUrl) msg += '\n\n📷 Photo: ' + photoUrl;
     try {
       await navigator.clipboard.writeText(msg);
       setCopied(true);
@@ -307,7 +292,6 @@ export default function SellCropPage() {
     );
   }
 
-  // SUCCESS SCREEN
   if (published) {
     return (
       <div className="page-enter min-h-screen px-4 py-6">
@@ -319,7 +303,6 @@ export default function SellCropPage() {
           <p className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
             Ab buyers aapki fasal "Sabki Fasal" page pe dekh sakte hain.
           </p>
-
           <div className="mt-8 space-y-3">
             <button
               onClick={() => navigate('/listings')}
@@ -332,12 +315,6 @@ export default function SellCropPage() {
               className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl border border-[hsl(var(--border))] text-sm font-bold"
             >
               Nayi Listing Banao
-            </button>
-            <button
-              onClick={handleWhatsApp}
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] text-sm font-bold text-white"
-            >
-              <Share2 size={18} /> WhatsApp pe Share
             </button>
           </div>
         </div>
@@ -365,9 +342,7 @@ export default function SellCropPage() {
         </div>
       )}
 
-      {/* Form */}
       <div className="mt-6 space-y-4">
-        {/* Crop */}
         <div>
           <label className="text-sm font-bold">Fasal *</label>
           <select
@@ -384,7 +359,6 @@ export default function SellCropPage() {
           </select>
         </div>
 
-        {/* Quantity */}
         <div>
           <label className="text-sm font-bold">Matra (quintal) *</label>
           <input
@@ -400,7 +374,6 @@ export default function SellCropPage() {
           </p>
         </div>
 
-        {/* Price */}
         <div>
           <label className="text-sm font-bold">Aapka bhav (₹/quintal) *</label>
           <input
@@ -413,7 +386,6 @@ export default function SellCropPage() {
           />
         </div>
 
-        {/* Mandi comparison */}
         {crop && (
           <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-3">
             {mandiLoading ? (
@@ -425,16 +397,14 @@ export default function SellCropPage() {
                 <p className="text-xs font-bold uppercase text-[hsl(var(--muted-foreground))]">
                   Aaj ka mandi bhav (median)
                 </p>
-                <p className="mt-1 text-lg font-bold">
-                  ₹{medianPrice.toFixed(0)}/quintal
-                </p>
+                <p className="mt-1 text-lg font-bold">₹{medianPrice.toFixed(0)}/quintal</p>
                 <p className="text-xs text-[hsl(var(--muted-foreground))]">
                   ≈ ₹{(medianPrice / 100).toFixed(1)}/kg
                 </p>
                 {compareText() && (
                   <p className={`mt-2 text-sm font-semibold ${compareText()?.color}`}>
                     {compareText()?.text}
-                    {price && ` (₹${Math.abs(priceDiff).toFixed(0)} ${priceDiff > 0 ? 'zyada' : 'kam'})`}
+                    {price && ' (₹' + Math.abs(priceDiff).toFixed(0) + ' ' + (priceDiff > 0 ? 'zyada' : 'kam') + ')'}
                   </p>
                 )}
               </div>
@@ -446,7 +416,6 @@ export default function SellCropPage() {
           </div>
         )}
 
-        {/* Ready date */}
         <div>
           <label className="text-sm font-bold">Kab se tayyar hai?</label>
           <input
@@ -457,7 +426,6 @@ export default function SellCropPage() {
           />
         </div>
 
-        {/* Village + District */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-sm font-bold">Gaon</label>
@@ -481,7 +449,6 @@ export default function SellCropPage() {
           </div>
         </div>
 
-        {/* Phone */}
         <div>
           <label className="text-sm font-bold">Phone Number</label>
           <input
@@ -494,7 +461,6 @@ export default function SellCropPage() {
           />
         </div>
 
-        {/* Note */}
         <div>
           <label className="text-sm font-bold">Note (optional)</label>
           <textarea
@@ -506,7 +472,6 @@ export default function SellCropPage() {
           />
         </div>
 
-        {/* Photo Upload */}
         <div>
           <label className="text-sm font-bold">Photo (optional)</label>
           {!photoPreview ? (
@@ -522,11 +487,7 @@ export default function SellCropPage() {
             </label>
           ) : (
             <div className="relative mt-1">
-              <img
-                src={photoPreview}
-                alt="Preview"
-                className="w-full rounded-xl"
-              />
+              <img src={photoPreview} alt="Preview" className="w-full rounded-xl" />
               <button
                 type="button"
                 onClick={removePhoto}
@@ -544,7 +505,6 @@ export default function SellCropPage() {
         </div>
       </div>
 
-      {/* Preview */}
       {crop && quantity && (
         <div className="mt-6 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4">
           <p className="text-xs font-bold uppercase text-[hsl(var(--muted-foreground))]">
@@ -556,32 +516,58 @@ export default function SellCropPage() {
         </div>
       )}
 
-      {/* PUBLISH BUTTON */}
       <button
         onClick={handlePublish}
         disabled={publishing || !crop || !quantity || !price || !district}
         className="mt-6 flex min-h-16 w-full items-center justify-center gap-2 rounded-xl bg-[hsl(var(--primary))] text-base font-bold text-[hsl(var(--primary-foreground))] disabled:opacity-50"
       >
         {publishing ? (
-          <><Loader2 className="animate-spin" size={20} /> Publishing...</>
+          <Loader2 className="animate-spin" size={20} />
         ) : (
-          <><Upload size={20} /> Publish Listing</>
+          <Upload size={20} />
         )}
+        {publishing ? ' Publishing...' : ' Publish Listing'}
       </button>
 
       <p className="mt-2 text-center text-xs text-[hsl(var(--muted-foreground))]">
         Listing "Sabki Fasal" page pe dikhegi
       </p>
 
-      {/* Share buttons */}
       <div className="mt-4 grid grid-cols-2 gap-3">
         <button
           onClick={handleWhatsApp}
           disabled={!crop || !quantity || uploading}
           className="flex min-h-14 items-center justify-center gap-2 rounded-xl bg-[#25D366] text-sm font-bold text-white disabled:opacity-50"
         >
-          {uploading ? (
-            <><Loader2 className="animate-spin" size={18} /> Wait...</>
-          ) : (
-            <><Share2 size={18} /> WhatsApp</>
-        
+          <Share2 size={18} /> WhatsApp
+        </button>
+        <button
+          onClick={handleCopy}
+          disabled={!crop || !quantity || uploading}
+          className="flex min-h-14 items-center justify-center gap-2 rounded-xl border border-[hsl(var(--border))] text-sm font-bold disabled:opacity-50"
+        >
+          {copied ? <Check size={18} /> : <Copy size={18} />}
+          {copied ? ' Copied' : ' Copy'}
+        </button>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-[#e6c879] bg-[#fbf0c9] p-3 text-xs text-[#66511b]">
+        <p className="flex items-start gap-2 font-bold">
+          <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+          Suraksha Chetavni
+        </p>
+        <p className="mt-1 ml-6">
+          Kabhi advance paisa mat do/lo. Pehle maal aur khareedar ki jaanch karo.
+        </p>
+      </div>
+
+      <div className="mt-3 flex items-start gap-2 rounded-xl border border-[hsl(var(--border))] p-3 text-xs text-[hsl(var(--muted-foreground))]">
+        <Info size={16} className="mt-0.5 shrink-0" />
+        <p>
+          Ye app sirf kisan aur khareedar ko jodta hai. Actual trade APMC ya e-NAM ke through karo.
+          Agri Check kisi transaction ke liye zimmedar nahi hai.
+        </p>
+      </div>
+    </div>
+  );
+  }
