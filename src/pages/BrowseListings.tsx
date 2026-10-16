@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'wouter';
-import { Loader2, Search, MapPin, Phone, User, Calendar, AlertCircle } from 'lucide-react';
+import { Loader2, Search, MapPin, Phone, User, Calendar, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { supabase, type Listing } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -11,6 +11,8 @@ interface ListingWithUser extends Listing {
   };
 }
 
+const CONTACTED_KEY = 'agri_contacted_listings';
+
 export default function BrowseListingsPage() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
@@ -18,6 +20,7 @@ export default function BrowseListingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [contacting, setContacting] = useState<string | null>(null);
+  const [contactedIds, setContactedIds] = useState<string[]>([]);
 
   // Filters
   const [searchCrop, setSearchCrop] = useState('');
@@ -26,49 +29,61 @@ export default function BrowseListingsPage() {
   const [filterMaxPrice, setFilterMaxPrice] = useState('');
 
   useEffect(() => {
+    // Load contacted IDs from localStorage
+    try {
+      const saved = localStorage.getItem(CONTACTED_KEY);
+      if (saved) setContactedIds(JSON.parse(saved));
+    } catch {
+      // ignore
+    }
+
     fetchListings();
+
+    // Restore scroll position after listings load
+    try {
+      const savedScroll = sessionStorage.getItem('browse_scroll_pos');
+      if (savedScroll) {
+        setTimeout(() => {
+          window.scrollTo(0, parseInt(savedScroll, 10));
+          sessionStorage.removeItem('browse_scroll_pos');
+        }, 300);
+      }
+    } catch {
+      // ignore
+    }
   }, []);
 
   const fetchListings = async () => {
-  setLoading(true);
-  try {
-    const now = new Date().toISOString();
-    const { data, error: fetchError } = await supabase
-      .from('listings')
-      .select(`
-        *,
-        users:user_id (
-          name,
-          average_rating
-        )
-      `)
-      .eq('status', 'active')
-      .gt('expires_at', now)
-      .order('created_at', { ascending: false });
+    setLoading(true);
+    try {
+      const now = new Date().toISOString();
+      const { data, error: fetchError } = await supabase
+        .from('listings')
+        .select(`
+          *,
+          users:user_id (
+            name,
+            average_rating
+          )
+        `)
+        .eq('status', 'active')
+        .gt('expires_at', now)
+        .order('created_at', { ascending: false });
 
-    if (fetchError) throw fetchError;
-    setListings(data || []);
-  } catch (err: any) {
-    setError(err?.message || 'Listings load nahi hui');
-  } finally {
-    setLoading(false);
-  }
-};
-  
+      if (fetchError) throw fetchError;
+      setListings(data || []);
+    } catch (err: any) {
+      setError(err?.message || 'Listings load nahi hui');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredListings = listings.filter((l) => {
-    if (searchCrop && !l.crop.toLowerCase().includes(searchCrop.toLowerCase())) {
-      return false;
-    }
-    if (filterDistrict && !l.district.toLowerCase().includes(filterDistrict.toLowerCase())) {
-      return false;
-    }
-    if (filterMinPrice && l.expected_price < Number(filterMinPrice)) {
-      return false;
-    }
-    if (filterMaxPrice && l.expected_price > Number(filterMaxPrice)) {
-      return false;
-    }
+    if (searchCrop && !l.crop.toLowerCase().includes(searchCrop.toLowerCase())) return false;
+    if (filterDistrict && !l.district.toLowerCase().includes(filterDistrict.toLowerCase())) return false;
+    if (filterMinPrice && l.expected_price < Number(filterMinPrice)) return false;
+    if (filterMaxPrice && l.expected_price > Number(filterMaxPrice)) return false;
     return true;
   });
 
@@ -78,16 +93,12 @@ export default function BrowseListingsPage() {
     const diffMs = now.getTime() - d.getTime();
     const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffHrs / 24);
-
     if (diffHrs < 1) return 'Abhi';
     if (diffHrs < 24) return `${diffHrs} ghante pehle`;
     if (diffDays < 7) return `${diffDays} din pehle`;
     return d.toLocaleDateString('en-IN');
   };
 
-  // ============================================================
-  // SECURE CONTACT — Uses RPC function
-  // ============================================================
   const handleContact = async (listing: ListingWithUser) => {
     if (!user) {
       navigate('/login');
@@ -96,7 +107,6 @@ export default function BrowseListingsPage() {
 
     setContacting(listing.id);
     try {
-      // Call secure RPC — records interest + returns seller phone
       const { data, error: rpcError } = await supabase.rpc('get_listing_contact', {
         p_listing_id: listing.id,
       });
@@ -120,15 +130,33 @@ export default function BrowseListingsPage() {
         return;
       }
 
-      // Build WhatsApp message
-      const message = `Namaste ${seller.seller_name || 'bhai'},\n\nAgri Check pe aapki *${listing.crop}* listing dekhi.\n${listing.quantity} quintal ₹${listing.expected_price}/quintal me chahiye.\n\n— Agri Check app se`;
+      // Save scroll position before opening WhatsApp
+      try {
+        sessionStorage.setItem('browse_scroll_pos', String(window.scrollY));
+      } catch {
+        // ignore
+      }
+
+      // Save contacted listing ID
+      const updated = contactedIds.includes(listing.id)
+        ? contactedIds
+        : [...contactedIds, listing.id];
+      setContactedIds(updated);
+      try {
+        localStorage.setItem(CONTACTED_KEY, JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
 
       // Strip country code if already present
-const cleanPhone = seller.phone.replace(/^\+?91/, '').replace(/\D/g, '');
-window.open(
-  `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(message)}`,
-  '_blank'
-);
+      const cleanPhone = seller.phone.replace(/^\+?91/, '').replace(/\D/g, '');
+
+      const message = `Namaste ${seller.seller_name || 'bhai'},\n\nAgri Check pe aapki *${listing.crop}* listing dekhi.\n${listing.quantity} quintal ₹${listing.expected_price}/quintal me chahiye.\n\n— Agri Check app se`;
+
+      window.open(
+        `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(message)}`,
+        '_blank'
+      );
     } catch (err: any) {
       alert(err?.message || 'Contact nahi hua');
     } finally {
@@ -217,14 +245,25 @@ window.open(
 
         {filteredListings.map((listing) => {
           const isOwnListing = listing.user_id === user?.id;
+          const isContacted = contactedIds.includes(listing.id);
 
           return (
             <div
               key={listing.id}
-              className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4"
+              className={`rounded-xl border bg-[hsl(var(--card))] p-4 ${
+                isContacted
+                  ? 'border-green-300'
+                  : 'border-[hsl(var(--border))]'
+              }`}
             >
+              {/* Contacted badge */}
+              {isContacted && (
+                <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-800">
+                  <CheckCircle2 size={12} /> Aapne contact kiya
+                </div>
+              )}
+
               <div className="flex gap-3">
-                {/* Photo */}
                 {listing.photos?.[0] ? (
                   <img
                     src={listing.photos[0]}
@@ -237,7 +276,6 @@ window.open(
                   </div>
                 )}
 
-                {/* Info */}
                 <div className="min-w-0 flex-1">
                   <h3 className="text-base font-bold">{listing.crop}</h3>
                   <p className="mt-1 text-sm font-semibold text-[hsl(var(--primary))]">
@@ -253,7 +291,6 @@ window.open(
                 </div>
               </div>
 
-              {/* Seller info */}
               <div className="mt-3 flex items-center justify-between border-t border-[hsl(var(--border))] pt-3">
                 <div className="flex items-center gap-2 text-xs">
                   <User size={14} className="text-[hsl(var(--muted-foreground))]" />
@@ -278,7 +315,6 @@ window.open(
                 </p>
               )}
 
-              {/* Contact Button OR Own Listing Badge */}
               {isOwnListing ? (
                 <div className="mt-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))] p-3 text-center text-xs font-bold text-[hsl(var(--muted-foreground))]">
                   👤 Ye aapki hi listing hai
@@ -287,10 +323,16 @@ window.open(
                 <button
                   onClick={() => handleContact(listing)}
                   disabled={contacting === listing.id}
-                  className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[hsl(var(--primary))] text-sm font-bold text-[hsl(var(--primary-foreground))] disabled:opacity-50"
+                  className={`mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold disabled:opacity-50 ${
+                    isContacted
+                      ? 'border border-green-300 bg-green-50 text-green-800'
+                      : 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+                  }`}
                 >
                   {contacting === listing.id ? (
                     <><Loader2 className="animate-spin" size={16} /> Contact ho raha...</>
+                  ) : isContacted ? (
+                    <><CheckCircle2 size={16} /> Wapas Contact Karo</>
                   ) : (
                     <><Phone size={16} /> Contact Karo</>
                   )}
@@ -302,4 +344,4 @@ window.open(
       </div>
     </div>
   );
-      }
+    }
