@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
-import { Loader2, Eye, Phone, Trash2, CheckCircle, RotateCcw, AlertCircle, Plus, ChevronDown, ChevronUp, MapPin, MessageCircle } from 'lucide-react';
+import { Loader2, Eye, Phone, Trash2, CheckCircle, RotateCcw, AlertCircle, Plus, ChevronDown, ChevronUp, MapPin, MessageCircle, ArrowLeft } from 'lucide-react';
 import { supabase, type Listing } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -160,10 +160,17 @@ export default function MyListingsPage() {
       </div>
     );
   }
+return (
+  <div className="page-enter min-h-screen px-4 py-6 pb-24">
+    <button
+      onClick={() => navigate('/mandi')}
+      className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))]"
+    >
+      <ArrowLeft size={18} /> Back
+    </button>
 
-  return (
-    <div className="page-enter min-h-screen px-4 py-6 pb-24">
-      <div className="flex items-center justify-between">
+    <div className="mt-4 flex items-center justify-between">
+   
         <div>
           <p className="eyebrow">10 / my listings</p>
           <h1 className="mt-2 text-2xl font-bold">🌾 Meri Fasal</h1>
