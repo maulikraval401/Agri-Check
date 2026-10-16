@@ -54,6 +54,7 @@ import BrowseListingsPage from '@/pages/BrowseListings';
 import MyListingsPage from '@/pages/MyListings';
 import ProfilePage from '@/pages/Profile';
 import PrivacyPage from '@/pages/Privacy';
+import TermsPage from '@/pages/Terms';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Language } from '@/i18n/translations';
@@ -1133,7 +1134,10 @@ function AppContent() {
           <Route path="/privacy">
             <PrivacyPage />
           </Route>
-          <Route path="/schemes">
+          <Route path="/terms">
+            <TermsPage />
+          </Route>
+         <Route path="/schemes">
             <SchemesPage />
           </Route>
           <Route path="/disease">
