@@ -194,9 +194,12 @@ export default function LoginPage() {
                   {t.privacyLink[language]}
                 </Link>
                 {' '}{t.and[language]}{' '}
-                <span className="font-bold text-[hsl(var(--primary))] underline">
+                <Link
+                  href="/terms"
+                  className="font-bold text-[hsl(var(--primary))] underline"
+                  >
                   {t.terms[language]}
-                </span>
+                </Link>
               </span>
             </label>
 
