@@ -100,9 +100,14 @@ export default function MyListingsPage() {
         });
         setInterestCounts(counts);
       }
-    } catch (err: any) {
-      setError(err?.message || 'Listings load nahi hui');
-    } finally {
+   } catch (err: any) {
+  const msg = err?.message || '';
+  if (msg.includes('10 active listings')) {
+    setError('10 active listings limit reached. Kuch listings delete karein.');
+  } else {
+    setError('Listing renew nahi hui. Dobara try karein.');
+  }
+} finally { 
       setLoading(false);
     }
   };
@@ -140,9 +145,16 @@ export default function MyListingsPage() {
 
       if (updateError) throw updateError;
       setListings((prev) => prev.map((l) => (l.id === listing.id ? { ...l, status: newStatus } : l)));
-    } catch (err: any) {
-      setError(err?.message || 'Status update nahi hua');
-    }
+   } catch (err: any) {
+  const msg = err?.message || '';
+  if (msg.includes('Listing expired')) {
+    setError('Ye listing expire ho chuki hai. Pehle "Renew" karein.');
+  } else if (msg.includes('10 active listings')) {
+    setError('10 active listings limit reached. Kuch listings delete karein.');
+  } else {
+    setError('Status update nahi hua. Dobara try karein.');
+  }
+    } 
   };
 
   const handleRenew = async (listingId: string) => {
