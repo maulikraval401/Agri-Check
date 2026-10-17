@@ -25,20 +25,21 @@ export default function ProfilePage() {
     deleteBtn: { en: 'Delete Account', gu: 'એકાઉન્ટ ડિલીટ કરો', hi: 'अकाउंट डिलीट करें', mr: 'खाते हटवा', pa: 'ਖਾਤਾ ਮਿਟਾਓ', ta: 'கணக்கை நீக்கு' },
     confirmTitle: { en: 'Confirm Delete?', gu: 'ખરેખર ડિલીટ કરવું છે?', hi: 'पक्का डिलीट करना है?', mr: 'नक्की हटवायचे आहे का?', pa: 'ਪੱਕਾ ਮਿਟਾਉਣਾ ਹੈ?', ta: 'நிச்சயமாக நீக்க வேண்டுமா?' },
     confirmDesc: { 
-      en: 'All your listings, interests, and profile will be permanently deleted. This cannot be undone.', 
-      gu: 'તમારી બધી લિસ્ટિંગ, રુચિઓ અને પ્રોફાઇલ કાયમ માટે ડિલીટ થઈ જશે. આ પાછું નહીં આવે.', 
-      hi: 'आपकी सभी लिस्टिंग, रुचियां और प्रोफाइल हमेशा के लिए डिलीट हो जाएंगी। यह वापस नहीं आएगा।', 
-      mr: 'तुमच्या सर्व लिस्टिंग, स्वारस्ये आणि प्रोफाइल कायमचे हटवले जातील. हे परत येणार नाही.', 
-      pa: 'ਤੁਹਾਡੀਆਂ ਸਾਰੀਆਂ ਲਿਸਟਿੰਗਾਂ, ਦਿਲਚਸਪੀਆਂ ਅਤੇ ਪ੍ਰੋਫਾਈਲ ਹਮੇਸ਼ਾ ਲਈ ਮਿਟਾ ਦਿੱਤੀਆਂ ਜਾਣਗੀਆਂ। ਇਹ ਵਾਪਸ ਨਹੀਂ ਆਵੇਗਾ।', 
-      ta: 'உங்கள் அனைத்து பட்டியல்கள், ஆர்வங்கள் மற்றும் சுயவிவரம் நிரந்தரமாக நீக்கப்படும். இதை மீட்டெடுக்க முடியாது.' 
+      en: 'All your listings, photos, and profile will be permanently deleted. This cannot be undone.', 
+      gu: 'તમારી બધી લિસ્ટિંગ, ફોટા અને પ્રોફાઇલ કાયમ માટે ડિલીટ થઈ જશે. આ પાછું નહીં આવે.', 
+      hi: 'आपकी सभी लिस्टिंग, फोटो और प्रोफाइल हमेशा के लिए डिलीट हो जाएंगी। यह वापस नहीं आएगा।', 
+      mr: 'तुमच्या सर्व लिस्टिंग, फोटो आणि प्रोफाइल कायमचे हटवले जातील. हे परत येणार नाही.', 
+      pa: 'ਤੁਹਾਡੀਆਂ ਸਾਰੀਆਂ ਲਿਸਟਿੰਗਾਂ, ਫੋਟੋਆਂ ਅਤੇ ਪ੍ਰੋਫਾਈਲ ਹਮੇਸ਼ਾ ਲਈ ਮਿਟਾ ਦਿੱਤੀਆਂ ਜਾਣਗੀਆਂ। ਇਹ ਵਾਪਸ ਨਹੀਂ ਆਵੇਗਾ।', 
+      ta: 'உங்கள் அனைத்து பட்டியல்கள், புகைப்படங்கள் மற்றும் சுயவிவரம் நிரந்தரமாக நீக்கப்படும். இதை மீட்டெடுக்க முடியாது.' 
     },
     cancel: { en: 'Cancel', gu: 'રદ કરો', hi: 'रद्द करें', mr: 'रद्द करा', pa: 'ਰੱਦ ਕਰੋ', ta: 'ரத்துசெய்' },
     yesDelete: { en: 'Yes, Delete', gu: 'હા, ડિલીટ કરો', hi: 'हां, डिलीट करें', mr: 'होय, हटवा', pa: 'ਹਾਂ, ਮਿਟਾਓ', ta: 'ஆம், நீக்கு' },
     dataUsage: { en: 'How your data is used', gu: 'તમારો ડેટા કેવી રીતે વપરાય છે', hi: 'आपका डेटा कैसे उपयोग होता है', mr: 'तुमचा डेटा कसा वापरला जातो', pa: 'ਤੁਹਾਡਾ ਡੇਟਾ ਕਿਵੇਂ ਵਰਤਿਆ ਜਾਂਦਾ ਹੈ', ta: 'உங்கள் தரவு எவ்வாறு பயன்படுத்தப்படுகிறது' },
     privacyLink: { en: 'Privacy Policy', gu: 'ગોપનીયતા નીતિ', hi: 'गोपनीयता नीति', mr: 'गोपनीयता धोरण', pa: 'ਪਰਦੇਦਾਰੀ ਨੀਤੀ', ta: 'தனியுரிமைக் கொள்கை' },
     loginReq: { en: 'Login to see profile', gu: 'પ્રોફાઇલ જોવા લોગિન કરો', hi: 'प्रोफाइल देखने के लिए लॉगिन करें', mr: 'प्रोफाइल पाहण्यासाठी लॉगिन करा', pa: 'ਪ੍ਰੋਫਾਈਲ ਦੇਖਣ ਲਈ ਲੌਗਇਨ ਕਰੋ', ta: 'சுயவிவரத்தைப் பார்க்க உள்நுழைக' },
-    loginBtn: { en: 'Login', gu: 'લોગિન', hi: 'लॉगिन', mr: 'लॉगिन', pa: 'ਲੌਗਇਨ', ta: 'உள்நுழை' },
-    back: { en: 'Back', gu: 'પાછળ', hi: 'पीछे', mr: 'मागे', pa: 'ਪਿੱਛੇ', ta: 'பின்னால்' }
+    loginBtn: { en: 'Login', gu: 'લોગિન', hi: 'लॉगिन', mr: 'લોગિન', pa: 'ਲੌਗਇਨ', ta: 'உள்நுழை' },
+    back: { en: 'Back', gu: 'પાછળ', hi: 'पीछे', mr: 'मागे', pa: 'ਪਿੱਛੇ', ta: 'பின்னால்' },
+    deleting: { en: 'Deleting...', gu: 'ડિલીટ થઈ રહ્યું છે...', hi: 'डिलीट हो रहा है...', mr: 'हटवत आहे...', pa: 'ਮਿਟਾਇਆ ਜਾ ਰਿਹਾ ਹੈ...', ta: 'நீக்குகிறது...' }
   };
 
   const handleLogout = async () => {
@@ -58,13 +59,41 @@ export default function ProfilePage() {
     setError('');
     try {
       if (user) {
-        await supabase.from('listings').delete().eq('user_id', user.id);
-        await supabase.from('users').delete().eq('id', user.id);
+        // 1. Fetch user's listings to get photo URLs
+        const { data: listings } = await supabase
+          .from('listings')
+          .select('photos')
+          .eq('user_id', user.id);
+
+        // 2. Extract storage paths from URLs (e.g., https://xxx.supabase.co/storage/v1/object/public/listing-photos/USER_ID/FILE.jpg)
+        const pathsToDelete: string[] = [];
+        if (listings) {
+          listings.forEach((l) => {
+            if (l.photos && Array.isArray(l.photos)) {
+              l.photos.forEach((url: string) => {
+                const parts = url.split('/listing-photos/');
+                if (parts.length === 2) {
+                  pathsToDelete.push(parts[1]);
+                }
+              });
+            }
+          });
+        }
+
+        // 3. Delete files from storage
+        if (pathsToDelete.length > 0) {
+          await supabase.storage.from('listing-photos').remove(pathsToDelete);
+        }
+
+        // 4. Call RPC to delete auth user (CASCADE will remove listings, interests, and public.users)
+        const { error: rpcError } = await supabase.rpc('delete_my_account');
+        if (rpcError) throw rpcError;
       }
+      
       await signOut();
       navigate('/');
     } catch (err: any) {
-      setError(err?.message || 'Account delete nahi hua');
+      setError(err?.message || 'Account delete nahi hua. Dobara try karein.');
       setLoading(false);
     }
   };
@@ -125,7 +154,7 @@ export default function ProfilePage() {
         </button>
 
         {!showDeleteConfirm ? (
-          <button onClick={() => setShowDeleteConfirm(true)} className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl border border-[#e5b5a5] text-sm font-bold text-[#833b2e]">
+          <button onClick={() => setShowDeleteConfirm(true)} disabled={loading} className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl border border-[#e5b5a5] text-sm font-bold text-[#833b2e] disabled:opacity-50">
             <Trash2 size={18} /> {t.deleteBtn[lang]}
           </button>
         ) : (
@@ -142,7 +171,7 @@ export default function ProfilePage() {
                 {t.cancel[lang]}
               </button>
               <button onClick={handleDeleteAccount} disabled={loading} className="flex min-h-11 items-center justify-center gap-1 rounded-xl bg-[#833b2e] text-xs font-bold text-white disabled:opacity-50">
-                {loading ? <Loader2 className="animate-spin" size={14} /> : <Trash2 size={14} />} {t.yesDelete[lang]}
+                {loading ? <><Loader2 className="animate-spin" size={14} /> {t.deleting[lang]}</> : <><Trash2 size={14} /> {t.yesDelete[lang]}</>}
               </button>
             </div>
           </div>
@@ -157,4 +186,4 @@ export default function ProfilePage() {
       </div>
     </div>
   );
-               }
+            }
