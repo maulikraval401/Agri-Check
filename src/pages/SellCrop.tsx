@@ -57,7 +57,7 @@ export default function SellCropPage() {
     cropSelect: { en: '-- Select Crop --', gu: '-- ફસલ પસંદ કરો --', hi: '-- फसल चुनें --', mr: '-- पीक निवडा --', pa: '-- ਫ਼ਸਲ ਚੁਣੋ --', ta: '-- பயிரைத் தேர்ந்தெடு --' },
     qtyLabel: { en: 'Quantity (quintal) *', gu: 'જથ્થો (ક્વિન્ટલ) *', hi: 'मात्रा (क्विंटल) *', mr: 'प्रमाण (क्विंटल) *', pa: 'ਮਾਤਰਾ (ਕੁਇੰਟਲ) *', ta: 'அளவு (குவிண்டால்) *' },
     qtyHint: { en: '1 quintal = 100 kg', gu: '1 ક્વિન્ટલ = 100 કિલો', hi: '1 क्विंटल = 100 किलो', mr: '1 क्विंटल = 100 किलो', pa: '1 ਕੁਇੰਟਲ = 100 ਕਿਲੋ', ta: '1 குவிண்டால் = 100 கிலோ' },
-    priceLabel: { en: 'Your price (₹/quintal) *', gu: 'તમારો ભાવ (₹/ક્વિન્ટલ) *', hi: 'आपका भाव (₹/क्विंटल) *', mr: 'तुमचा दर (₹/ક્વિન્ટલ) *', pa: 'ਤੁਹਾਡਾ ਭਾਅ (₹/ਕੁਇੰਟਲ) *', ta: 'உங்கள் விலை (₹/குவிண்டால்) *' },
+    priceLabel: { en: 'Your price (₹/quintal) *', gu: 'તમારો ભાવ (₹/ક્વિન્ટલ) *', hi: 'आपका भाव (₹/क्विंटल) *', mr: 'तुमचा दर (₹/क्विंटल) *', pa: 'ਤੁਹਾਡਾ ਭਾਅ (₹/ਕੁਇੰਟਲ) *', ta: 'உங்கள் விலை (₹/குவிண்டால்) *' },
     mandiLoading: { en: 'Loading mandi prices...', gu: 'મંડી ભાવ લોડ થઈ રહ્યા છે...', hi: 'मंडी भाव लोड हो रहे हैं...', mr: 'बाजारभाव लोड होत आहेत...', pa: 'ਮੰਡੀ ਭਾਅ ਲੋਡ ਹੋ ਰਹੇ ਹਨ...', ta: 'மண்டி விலைகள் ஏற்றப்படுகின்றன...' },
     mandiMedian: { en: 'Today mandi price (median)', gu: 'આજનો મંડી ભાવ (મધ્યસ્થ)', hi: 'आज का मंडी भाव (माध्यिका)', mr: 'आजचा बाजारभाव (मध्यमान)', pa: 'ਅੱਜ ਦਾ ਮੰਡੀ ਭਾਅ (ਮੱਧਮਾਨ)', ta: 'இன்றைய மண்டி விலை (இடைநிலை)' },
     mandiNo: { en: 'No mandi price found for this crop', gu: 'આ ફસલ માટે કોઈ મંડી ભાવ મળ્યો નથી', hi: 'इस फसल के लिए कोई मंडी भाव नहीं मिला', mr: 'या पिकासाठी बाजारभाव आढळला नाही', pa: 'ਇਸ ਫ਼ਸਲ ਲਈ ਕੋਈ ਮੰਡੀ ਭਾਅ ਨਹੀਂ ਮਿਲਿਆ', ta: 'இந்த பயிருக்கு மண்டி விலை இல்லை' },
@@ -80,7 +80,7 @@ export default function SellCropPage() {
     publishHint: { en: 'Listing will show on "Sabki Fasal"', gu: 'લિસ્ટિંગ "બધાની ફસલ" પર દેખાશે', hi: 'लिस्टिंग "सबकी फसल" पर दिखेगी', mr: 'लिस्टिंग "सर्वांचे पीक" वर दिसेल', pa: 'ਲਿਸਟਿੰਗ "ਸਭ ਦੀ ਫ਼ਸਲ" ਤੇ ਦਿਖੇਗੀ', ta: 'பட்டியல் "அனைவரின் பயிர்" பக்கத்தில் தோன்றும்' },
     shareBtn: { en: 'WhatsApp', gu: 'WhatsApp', hi: 'WhatsApp', mr: 'WhatsApp', pa: 'WhatsApp', ta: 'WhatsApp' },
     copyBtn: { en: 'Copy', gu: 'કોપી કરો', hi: 'कॉपी करें', mr: 'कॉपी करा', pa: 'ਕਾਪੀ ਕਰੋ', ta: 'நகலெடு' },
-    copiedBtn: { en: 'Copied', gu: 'કોપી થયું', hi: 'कॉपी हो गया', mr: 'कॉपी झाले', pa: 'ਕਾਪੀ ਹੋ ਗਿਆ', ta: 'நகலெடுக்கப்பட்டது' },
+    copiedBtn: { en: 'Copied', gu: 'કોપી થયું', hi: 'कॉपी हो गया', mr: 'કોપી થયું', pa: 'ਕਾਪੀ ਹੋ ਗਿਆ', ta: 'நகலெடுக்கப்பட்டது' },
     safety: { en: 'Safety Warning', gu: 'સુરક્ષા ચેતવણી', hi: 'सुरक्षा चेतावनी', mr: 'सुरक्षा इशारा', pa: 'ਸੁਰੱਖਿਆ ਚੇਤਾਵਨੀ', ta: 'பாதுகாப்பு எச்சரிக்கை' },
     safetyDesc: { en: 'Never give/take advance money. Verify goods and buyer first.', gu: 'ક્યારેય એડવાન્સ પૈસા ન આપો/લો. પહેલા માલ અને ખરીદનારની ચકાસણી કરો.', hi: 'कभी एडवांस पैसे न दें/लें। पहले माल और खरीदार की जांच करें।', mr: 'कधीही ॲडव्हान्स पैसे देऊ/घेऊ नका. आधी माल आणि खरेदीदाराची तपासणी करा.', pa: 'ਕਦੇ ਐਡਵਾਂਸ ਪੈਸੇ ਨਾ ਦਿਓ/ਲਓ। ਪਹਿਲਾਂ ਮਾਲ ਅਤੇ ਖਰੀਦਦਾਰ ਦੀ ਜਾਂਚ ਕਰੋ।', ta: 'முன்பணம் கொடுக்கவோ வாங்கவோ வேண்டாம். முதலில் பொருள் மற்றும் வாங்குபவரை சரிபார்க்கவும்.' },
     legal: { en: 'This app only connects farmers and buyers. Actual trade through APMC or e-NAM. Agri Check is not responsible for any transaction.', gu: 'આ એપ ફક્ત ખેડૂત અને ખરીદનારને જોડે છે. વાસ્તવિક વેપાર APMC અથવા e-NAM દ્વારા. Agri Check કોઈપણ વ્યવહાર માટે જવાબદાર નથી.', hi: 'यह ऐप केवल किसान और खरीदार को जोड़ता है। वास्तविक व्यापार APMC या e-NAM के माध्यम से। Agri Check किसी भी लेन-देन के लिए जिम्मेदार नहीं है।', mr: 'हे ॲप फक्त शेतकरी आणि खरेदीदार जोडते. प्रत्यक्ष व्यापार APMC किंवा e-NAM द्वारे. Agri Check कोणत्याही व्यवहारासाठी जबाबदार नाही.', pa: 'ਇਹ ਐਪ ਸਿਰਫ਼ ਕਿਸਾਨ ਅਤੇ ਖਰੀਦਦਾਰ ਨੂੰ ਜੋੜਦੀ ਹੈ। ਅਸਲੀ ਵਪਾਰ APMC ਜਾਂ e-NAM ਰਾਹੀਂ। Agri Check ਕਿਸੇ ਵੀ ਲੈਣ-ਦੇਣ ਲਈ ਜ਼ਿੰਮੇਵਾਰ ਨਹੀਂ ਹੈ।', ta: 'இந்த செயலி விவசாயிகள் மற்றும் வாங்குபவர்களை மட்டுமே இணைக்கிறது. உண்மையான வணிகம் APMC அல்லது e-NAM மூலம். Agri Check எந்தவொரு பரிவர்த்தனைக்கும் பொறுப்பல்ல.' },
@@ -133,6 +133,47 @@ export default function SellCropPage() {
     return { text: t.cmpLow[lang], color: 'text-orange-700' };
   };
 
+  // EXIF hatane aur size kam karne ke liye Canvas resize helper
+  const resizeImage = (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_SIZE = 800; // Max 800px
+          let { width, height } = img;
+
+          if (width > height && width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+          } else if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) resolve(blob);
+              else reject(new Error('Canvas toBlob failed'));
+            },
+            'image/jpeg',
+            0.8 // 80% Quality
+          );
+        };
+        img.onerror = (err) => reject(err);
+      };
+      reader.onerror = (err) => reject(err);
+    });
+  };
+
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -158,12 +199,22 @@ export default function SellCropPage() {
 
     setUploading(true);
     try {
-      const fileExt = photo.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      // 1. Canvas se resize aur EXIF remove karo
+      const resizedBlob = await resizeImage(photo);
+      
+      // 2. Naya filename banayo (kyunki ab file jpeg blob hai)
+      const fileName = `${user.id}/${Date.now()}.jpg`;
+
+      // 3. Upload resized Blob (na ki original photo)
       const { error: uploadError } = await supabase.storage
         .from('listing-photos')
-        .upload(fileName, photo, { contentType: photo.type, upsert: false });
+        .upload(fileName, resizedBlob, { 
+          contentType: 'image/jpeg', 
+          upsert: false 
+        });
+        
       if (uploadError) throw uploadError;
+      
       const { data } = supabase.storage.from('listing-photos').getPublicUrl(fileName);
       setUploadedPhotoUrl(data.publicUrl);
       return data.publicUrl;
@@ -266,8 +317,8 @@ export default function SellCropPage() {
         <Loader2 className="animate-spin" size={32} />
       </div>
     );
-}
-   if (published) {
+    }
+    if (published) {
     return (
       <div className="page-enter min-h-screen px-4 py-6">
         <div className="mt-12 mx-auto max-w-md text-center">
@@ -434,4 +485,4 @@ export default function SellCropPage() {
       </div>
     </div>
   );
-        } 
+}
