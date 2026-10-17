@@ -219,9 +219,17 @@ export default function SellCropPage() {
       setUploadedPhotoUrl(data.publicUrl);
       return data.publicUrl;
     } catch (err: any) {
-      setError(t.errUpload[lang]);
-      return null;
-    } finally {
+  const msg = err?.message || '';
+  if (msg.includes('10 active listings')) {
+    setError(lang === 'gu' ? 'તમારી 10 એક્ટિવ લિસ્ટિંગ થઈ ગઈ છે. પહેલા કોઈ લિસ્ટિંગ વેચો અથવા ડિલીટ કરો.' : lang === 'hi' ? 'आपकी 10 सक्रिय लिस्टिंग हो गई हैं। पहले कोई लिस्टिंग बेचें या डिलीट करें।' : 'Aapki 10 active listings ho chuki hain. Pehle koi listing bechein ya delete karein.');
+  } else if (msg.includes('duplicate')) {
+    setError(lang === 'gu' ? 'આ લિસ્ટિંગ પહેલેથી જ એક્ટિવ છે. ડુપ્લિકેટ લિસ્ટિંગ માન્ય નથી.' : lang === 'hi' ? 'यह लिस्टिंग पहले से ही सक्रिय है। डुप्लीकेट लिस्टिंग मान्य नहीं है।' : 'Ye listing already active hai. Duplicate listing allowed nahi hai.');
+  } else if (msg.includes('row-level security')) {
+    setError('Aapko iski permission nahi hai.');
+  } else {
+    setError(t.errPublish[lang]);
+  }
+} finally {
       setUploading(false);
     }
   };
