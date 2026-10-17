@@ -1,25 +1,41 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { Loader2, Search, MapPin, Phone, User, Calendar, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
-import { supabase, type Listing } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/i18n/LanguageContext';
 
-interface ListingWithUser extends Listing {
-  users?: {
-    name: string;
-    average_rating: number;
-  };
-}
-
 const CONTACTED_KEY = 'agri_contacted_listings';
+const PAGE_SIZE = 20;
+
+interface BrowseListing {
+  id: string;
+  user_id: string;
+  crop: string;
+  quantity: number;
+  unit: string;
+  expected_price: number;
+  ready_date: string | null;
+  description: string | null;
+  photos: string[];
+  village: string | null;
+  district: string;
+  state: string;
+  created_at: string;
+  seller_name: string;
+  seller_rating: number;
+}
 
 export default function BrowseListingsPage() {
   const { user } = useAuth();
   const { language } = useLanguage();
   const [, navigate] = useLocation();
-  const [listings, setListings] = useState<ListingWithUser[]>([]);
+  
+  const [listings, setListings] = useState<BrowseListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
   const [error, setError] = useState('');
   const [contacting, setContacting] = useState<string | null>(null);
   const [contactedIds, setContactedIds] = useState<string[]>([]);
@@ -48,7 +64,8 @@ export default function BrowseListingsPage() {
     contact: { en: 'Contact', gu: 'સંપર્ક કરો', hi: 'संपर्क करें', mr: 'संपर्क करा', pa: 'ਸੰਪਰਕ ਕਰੋ', ta: 'தொடர்பு கொள்ள' },
     contactAgain: { en: 'Contact Again', gu: 'ફરી સંપર્ક કરો', hi: 'फिर संपर्क करें', mr: 'पुन्हा संपर्क करा', pa: 'ਦੁਬਾਰਾ ਸੰਪਰਕ ਕਰੋ', ta: 'மீண்டும் தொடர்பு கொள்ள' },
     contacting: { en: 'Contacting...', gu: 'સંપર્ક થઈ રહ્યો છે...', hi: 'संपर्क हो रहा है...', mr: 'संपर्क होत आहे...', pa: 'ਸੰਪਰਕ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ...', ta: 'தொடர்பு கொள்கிறது...' },
-    farmer: { en: 'Farmer', gu: 'ખેડૂત', hi: 'किसान', mr: 'शेतकरी', pa: 'ਕਿਸਾਨ', ta: 'விவசாயி' }
+    farmer: { en: 'Farmer', gu: 'ખેડૂત', hi: 'किसान', mr: 'शेतकरी', pa: 'ਕਿਸਾਨ', ta: 'விவசாயி' },
+    loadMore: { en: 'Load More', gu: 'વધુ લોડ કરો', hi: 'और लोड करें', mr: 'अधिक लोड करा', pa: 'ਹੋਰ ਲੋਡ ਕਰੋ', ta: 'மேலும் ஏற்று' }
   };
 
   useEffect(() => {
@@ -57,8 +74,8 @@ export default function BrowseListingsPage() {
       if (saved) setContactedIds(JSON.parse(saved));
     } catch {}
 
-    fetchListings();
-
+    fetchListings(0, true);
+    
     try {
       const savedScroll = sessionStorage.getItem('browse_scroll_pos');
       if (savedScroll) {
@@ -70,48 +87,47 @@ export default function BrowseListingsPage() {
     } catch {}
   }, []);
 
-  const fetchListings = async () => {
-    setLoading(true);
+  const fetchListings = async (pageNumber: number, isInitial = false) => {
+    if (isInitial) setLoading(true);
+    else setLoadingMore(true);
+    
+    setError('');
     try {
-      const now = new Date().toISOString();
-      const { data, error: fetchError } = await supabase
-        .from('listings')
-        .select(`*, users:user_id (name, average_rating)`)
-        .eq('status', 'active')
-        .gt('expires_at', now)
-        .order('created_at', { ascending: false });
+      const { data, error: rpcError } = await supabase.rpc('get_browse_listings', {
+        p_limit: PAGE_SIZE,
+        p_offset: pageNumber * PAGE_SIZE,
+        p_crop: searchCrop || null,
+        p_district: filterDistrict || null,
+        p_min_price: filterMinPrice ? Number(filterMinPrice) : null,
+        p_max_price: filterMaxPrice ? Number(filterMaxPrice) : null,
+      });
 
-      if (fetchError) throw fetchError;
-      setListings(data || []);
+      if (rpcError) throw rpcError;
+
+      const newListings = data || [];
+      
+      if (isInitial) {
+        setListings(newListings);
+      } else {
+        setListings((prev) => [...prev, ...newListings]);
+      }
+      
+      setHasMore(newListings.length === PAGE_SIZE);
+      setPage(pageNumber);
+      
     } catch (err: any) {
       setError(err?.message || 'Listings load nahi hui');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
-  const filteredListings = listings.filter((l) => {
-    if (searchCrop && !l.crop.toLowerCase().includes(searchCrop.toLowerCase())) return false;
-    if (filterDistrict && !l.district.toLowerCase().includes(filterDistrict.toLowerCase())) return false;
-    if (filterMinPrice && l.expected_price < Number(filterMinPrice)) return false;
-    if (filterMaxPrice && l.expected_price > Number(filterMaxPrice)) return false;
-    return true;
-  });
-
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - d.getTime();
-    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHrs / 24);
-
-    if (diffHrs < 1) return lang === 'gu' ? 'હમણાં જ' : lang === 'hi' ? 'अभी' : lang === 'mr' ? 'आत्ताच' : lang === 'pa' ? 'ਹੁਣੇ' : lang === 'ta' ? 'இப்போது' : 'Just now';
-    if (diffHrs < 24) return diffHrs + (lang === 'gu' ? ' કલાક પહેલા' : lang === 'hi' ? ' घंटे पहले' : lang === 'mr' ? ' तासांपूर्वी' : lang === 'pa' ? ' ਘੰਟੇ ਪਹਿਲਾਂ' : lang === 'ta' ? ' மணி நேரத்திற்கு முன்பு' : ' hours ago');
-    if (diffDays < 7) return diffDays + (lang === 'gu' ? ' દિવસ પહેલા' : lang === 'hi' ? ' दिन पहले' : lang === 'mr' ? ' दिवसांपूर्वी' : lang === 'pa' ? ' ਦਿਨ ਪਹਿਲਾਂ' : lang === 'ta' ? ' நாட்களுக்கு முன்பு' : ' days ago');
-    return d.toLocaleDateString('en-IN');
+  const applyFilters = () => {
+    fetchListings(0, true);
   };
 
-  const handleContact = async (listing: ListingWithUser) => {
+  const handleContact = async (listing: BrowseListing) => {
     if (!user) {
       navigate('/login');
       return;
@@ -130,6 +146,8 @@ export default function BrowseListingsPage() {
           alert('Ye listing ab active nahi hai');
         } else if (rpcError.message.includes('Login required')) {
           navigate('/login');
+        } else if (rpcError.message.includes('limit reached')) {
+          alert('Aapne aaj bahut zyada logon ko contact kar liya hai. Kal dobara try karein.');
         } else {
           alert(rpcError.message || 'Contact nahi hua');
         }
@@ -152,6 +170,7 @@ export default function BrowseListingsPage() {
         localStorage.setItem(CONTACTED_KEY, JSON.stringify(updated));
       } catch {}
 
+      // Double 91 fix
       const cleanPhone = seller.phone.replace(/^\+?91/, '').replace(/\D/g, '');
       const message = `Namaste ${seller.seller_name || 'bhai'},\n\nAgri Check pe aapki *${listing.crop}* listing dekhi.\n${listing.quantity} quintal ₹${listing.expected_price}/quintal me chahiye.\n\n— Agri Check app se`;
 
@@ -163,15 +182,27 @@ export default function BrowseListingsPage() {
     }
   };
 
-  if (loading) {
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHrs / 24);
+
+    if (diffHrs < 1) return lang === 'gu' ? 'હમણાં જ' : lang === 'hi' ? 'अभी' : lang === 'mr' ? 'आत्ताच' : lang === 'pa' ? 'ਹੁਣੇ' : lang === 'ta' ? 'இப்போது' : 'Just now';
+    if (diffHrs < 24) return diffHrs + (lang === 'gu' ? ' કલાક પહેલા' : lang === 'hi' ? ' घंटे पहले' : lang === 'mr' ? ' तासांपूर्वी' : lang === 'pa' ? ' ਘੰਟੇ ਪਹਿਲਾਂ' : lang === 'ta' ? ' மணி நேரத்திற்கு முன்பு' : ' hours ago');
+    if (diffDays < 7) return diffDays + (lang === 'gu' ? ' દિવસ પહેલા' : lang === 'hi' ? ' दिन पहले' : lang === 'mr' ? ' दिवसांपूर्वी' : lang === 'pa' ? ' ਦਿਨ ਪਹਿਲਾਂ' : lang === 'ta' ? ' நாட்களுக்கு முன்பு' : ' days ago');
+    return d.toLocaleDateString('en-IN');
+  };
+
+  if (loading && page === 0) {
     return (
       <div className="grid min-h-screen place-items-center">
         <Loader2 className="animate-spin" size={32} />
       </div>
     );
-  }
-
-  return (
+               }
+    return (
     <div className="page-enter min-h-screen px-4 py-6 pb-24">
       <button onClick={() => navigate('/mandi')} className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))]">
         <ArrowLeft size={18} /> {t.back[lang]}
@@ -180,10 +211,11 @@ export default function BrowseListingsPage() {
       <p className="eyebrow mt-4">09 / listings</p>
       <h1 className="mt-2 text-2xl font-bold tracking-tight">🛒 {t.title[lang]}</h1>
       <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
-        {filteredListings.length} {t.found[lang]}
+        {listings.length} {t.found[lang]} {hasMore && '+'}
       </p>
 
-      <div className="mt-4 space-y-2 rounded-xl border border-[hsl(var(--border))] p-3">
+      {/* Filters */}
+      <div className="mt-4 space-y-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-3">
         <div className="flex items-center gap-2">
           <Search size={16} className="text-[hsl(var(--muted-foreground))]" />
           <input
@@ -219,14 +251,21 @@ export default function BrowseListingsPage() {
             className="min-h-10 rounded-lg border border-[hsl(var(--border))] px-3 text-sm outline-none"
           />
         </div>
+        <button
+          onClick={applyFilters}
+          className="mt-2 w-full min-h-10 rounded-lg bg-[hsl(var(--primary)/.1)] text-sm font-bold text-[hsl(var(--primary))]"
+        >
+          Search / Filter
+        </button>
       </div>
 
       {error && (
         <div className="mt-4 rounded-xl border border-[#e5b5a5] bg-[#f9e4dc] p-3 text-sm text-[#833b2e]">{error}</div>
       )}
 
+      {/* Listings */}
       <div className="mt-4 space-y-3">
-        {filteredListings.length === 0 && !loading && (
+        {listings.length === 0 && !loading && !loadingMore && (
           <div className="rounded-xl border border-[hsl(var(--border))] p-8 text-center">
             <AlertCircle size={40} className="mx-auto text-[hsl(var(--muted-foreground))]" />
             <p className="mt-3 text-sm font-bold">{t.noListings[lang]}</p>
@@ -237,7 +276,7 @@ export default function BrowseListingsPage() {
           </div>
         )}
 
-        {filteredListings.map((listing) => {
+        {listings.map((listing) => {
           const isOwnListing = listing.user_id === user?.id;
           const isContacted = contactedIds.includes(listing.id);
 
@@ -271,9 +310,9 @@ export default function BrowseListingsPage() {
               <div className="mt-3 flex items-center justify-between border-t border-[hsl(var(--border))] pt-3">
                 <div className="flex items-center gap-2 text-xs">
                   <User size={14} className="text-[hsl(var(--muted-foreground))]" />
-                  <span className="font-semibold">{listing.users?.name || t.farmer[lang]}</span>
-                  {listing.users?.average_rating ? (
-                    <span className="text-[hsl(var(--muted-foreground))]">⭐ {listing.users.average_rating.toFixed(1)}</span>
+                  <span className="font-semibold">{listing.seller_name || t.farmer[lang]}</span>
+                  {listing.seller_rating ? (
+                    <span className="text-[hsl(var(--muted-foreground))]">⭐ {listing.seller_rating.toFixed(1)}</span>
                   ) : null}
                 </div>
                 {listing.ready_date && (
@@ -313,6 +352,20 @@ export default function BrowseListingsPage() {
           );
         })}
       </div>
+
+      {/* Load More Button */}
+      {hasMore && (
+        <div className="mt-6 flex justify-center">
+          <button
+            onClick={() => fetchListings(page + 1)}
+            disabled={loadingMore}
+            className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[hsl(var(--border))] px-6 text-sm font-bold disabled:opacity-50"
+          >
+            {loadingMore ? <Loader2 className="animate-spin" size={18} /> : null}
+            {loadingMore ? t.loading[lang] : t.loadMore[lang]}
+          </button>
+        </div>
+      )}
     </div>
   );
-                                                                          }
+      }
