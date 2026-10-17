@@ -5,7 +5,6 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/i18n/LanguageContext';
 
-const CONTACTED_KEY = 'agri_contacted_listings';
 const PAGE_SIZE = 20;
 
 interface BrowseListing {
@@ -38,6 +37,9 @@ export default function BrowseListingsPage() {
   const [page, setPage] = useState(0);
   const [error, setError] = useState('');
   const [contacting, setContacting] = useState<string | null>(null);
+  
+  // User-wise contacted list
+  const contactedKey = user ? `agri_contacted_listings_${user.id}` : 'agri_contacted_listings_guest';
   const [contactedIds, setContactedIds] = useState<string[]>([]);
 
   // Filters
@@ -56,6 +58,7 @@ export default function BrowseListingsPage() {
     districtPh: { en: 'District', gu: 'જિલ્લો', hi: 'जिला', mr: 'जिल्हा', pa: 'ਜ਼ਿਲ੍ਹਾ', ta: 'மாவட்டம்' },
     minPrice: { en: 'Min ₹', gu: 'ન્યૂનતમ ₹', hi: 'न्यूनतम ₹', mr: 'किमान ₹', pa: 'ਘੱਟੋ-ਘੱਟ ₹', ta: 'குறைந்தபட்ச ₹' },
     maxPrice: { en: 'Max ₹', gu: 'મહત્તમ ₹', hi: 'अधिकतम ₹', mr: 'कमाल ₹', pa: 'ਵੱਧ ਤੋਂ ਵੱਧ ₹', ta: 'அதிகபட்ச ₹' },
+    filterBtn: { en: 'Search / Filter', gu: 'શોધો / ફિલ્ટર', hi: 'खोजें / फिल्टर', mr: 'शोधा / फिल्टर', pa: 'ਖੋਜੋ / ਫਿਲਟਰ', ta: 'தேடு / வடிகட்டு' },
     noListings: { en: 'No listings found', gu: 'કોઈ લિસ્ટિંગ મળી નથી', hi: 'कोई लिस्टिंग नहीं मिली', mr: 'कोणतीही लिस्टिंग आढळली नाही', pa: 'ਕੋਈ ਲਿਸਟਿੰਗ ਨਹੀਂ ਮਿਲੀ', ta: 'பட்டியல்கள் எதுவும் இல்லை' },
     tryFilter: { en: 'Change filters or check later', gu: 'ફિલ્ટર બદલો અથવા પછી જુઓ', hi: 'फिल्टर बदलें या बाद में देखें', mr: 'फिल्टर बदला किंवा नंतर पहा', pa: 'ਫਿਲਟਰ ਬਦਲੋ ਜਾਂ ਬਾਅਦ ਵਿੱਚ ਦੇਖੋ', ta: 'வடிகட்டிகளை மாற்றவும் அல்லது பின்னர் பார்க்கவும்' },
     createBtn: { en: 'Create First Listing', gu: 'પ્રથમ લિસ્ટિંગ બનાવો', hi: 'पहली लिस्टिंग बनाएं', mr: 'पहिली लिस्टिंग तयार करा', pa: 'ਪਹਿਲੀ ਲਿਸਟਿੰਗ ਬਣਾਓ', ta: 'முதல் பட்டியலை உருவாக்கு' },
@@ -65,12 +68,13 @@ export default function BrowseListingsPage() {
     contactAgain: { en: 'Contact Again', gu: 'ફરી સંપર્ક કરો', hi: 'फिर संपर्क करें', mr: 'पुन्हा संपर्क करा', pa: 'ਦੁਬਾਰਾ ਸੰਪਰਕ ਕਰੋ', ta: 'மீண்டும் தொடர்பு கொள்ள' },
     contacting: { en: 'Contacting...', gu: 'સંપર્ક થઈ રહ્યો છે...', hi: 'संपर्क हो रहा है...', mr: 'संपर्क होत आहे...', pa: 'ਸੰਪਰਕ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ...', ta: 'தொடர்பு கொள்கிறது...' },
     farmer: { en: 'Farmer', gu: 'ખેડૂત', hi: 'किसान', mr: 'शेतकरी', pa: 'ਕਿਸਾਨ', ta: 'விவசாயி' },
-    loadMore: { en: 'Load More', gu: 'વધુ લોડ કરો', hi: 'और लोड करें', mr: 'अधिक लोड करा', pa: 'ਹੋਰ ਲੋਡ ਕਰੋ', ta: 'மேலும் ஏற்று' }
+    loadMore: { en: 'Load More', gu: 'વધુ લોડ કરો', hi: 'और लोड करें', mr: 'अधिक लोड करा', pa: 'ਹੋਰ ਲੋਡ ਕਰੋ', ta: 'மேலும் ஏற்று' },
+    loading: { en: 'Loading...', gu: 'લોડ થઈ રહ્યું છે...', hi: 'लोड हो रहा है...', mr: 'लोड होत आहे...', pa: 'ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...', ta: 'ஏற்றுகிறது...' }
   };
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(CONTACTED_KEY);
+      const saved = localStorage.getItem(contactedKey);
       if (saved) setContactedIds(JSON.parse(saved));
     } catch {}
 
@@ -85,7 +89,7 @@ export default function BrowseListingsPage() {
         }, 300);
       }
     } catch {}
-  }, []);
+  }, [user]); // Re-run if user changes (login/logout)
 
   const fetchListings = async (pageNumber: number, isInitial = false) => {
     if (isInitial) setLoading(true);
@@ -129,7 +133,7 @@ export default function BrowseListingsPage() {
 
   const handleContact = async (listing: BrowseListing) => {
     if (!user) {
-      navigate('/login');
+      navigate('/login?redirect=/listings');
       return;
     }
 
@@ -145,7 +149,7 @@ export default function BrowseListingsPage() {
         } else if (rpcError.message.includes('not active')) {
           alert('Ye listing ab active nahi hai');
         } else if (rpcError.message.includes('Login required')) {
-          navigate('/login');
+          navigate('/login?redirect=/listings');
         } else if (rpcError.message.includes('limit reached')) {
           alert('Aapne aaj bahut zyada logon ko contact kar liya hai. Kal dobara try karein.');
         } else {
@@ -167,7 +171,7 @@ export default function BrowseListingsPage() {
       const updated = contactedIds.includes(listing.id) ? contactedIds : [...contactedIds, listing.id];
       setContactedIds(updated);
       try {
-        localStorage.setItem(CONTACTED_KEY, JSON.stringify(updated));
+        localStorage.setItem(contactedKey, JSON.stringify(updated));
       } catch {}
 
       // Double 91 fix
@@ -255,7 +259,7 @@ export default function BrowseListingsPage() {
           onClick={applyFilters}
           className="mt-2 w-full min-h-10 rounded-lg bg-[hsl(var(--primary)/.1)] text-sm font-bold text-[hsl(var(--primary))]"
         >
-          Search / Filter
+          {t.filterBtn[lang]}
         </button>
       </div>
 
@@ -368,4 +372,4 @@ export default function BrowseListingsPage() {
       )}
     </div>
   );
-      }
+          }
