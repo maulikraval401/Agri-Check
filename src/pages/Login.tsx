@@ -9,6 +9,10 @@ export default function LoginPage() {
   const [, navigate] = useLocation();
   const { sendOtp, verifyOtp } = useAuth();
 
+  // URL se redirect path nikaalo (e.g., /login?redirect=/listings)
+  const searchParams = new URLSearchParams(window.location.search);
+  const redirectTo = searchParams.get('redirect') || '/sell';
+
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
@@ -18,44 +22,24 @@ export default function LoginPage() {
 
   const t = {
     title: {
-      en: 'Login / Sign Up',
-      gu: 'લોગિન / સાઇન અપ',
-      hi: 'लॉगिन / साइन अप',
-      mr: 'लॉगिन / साइन अप',
-      pa: 'ਲੌਗਇਨ / ਸਾਈਨ ਅੱਪ',
-      ta: 'உள்நுழை / பதிவு',
+      en: 'Login / Sign Up', gu: 'લોગિન / સાઇન અપ', hi: 'लॉगिन / साइन अप',
+      mr: 'लॉगिन / साइन अप', pa: 'ਲੌਗਇਨ / ਸਾਈਨ ਅੱਪ', ta: 'உள்நுழை / பதிவு',
     },
     phoneLabel: {
-      en: 'Phone Number',
-      gu: 'મોબાઇલ નંબર',
-      hi: 'मोबाइल नंबर',
-      mr: 'मोबाइल नंबर',
-      pa: 'ਮੋਬਾਈਲ ਨੰਬਰ',
-      ta: 'மொபைல் எண்',
+      en: 'Phone Number', gu: 'મોબાઇલ નંબર', hi: 'मोबाइल नंबर',
+      mr: 'मोबाइल नंबर', pa: 'ਮੋਬਾਈਲ ਨੰਬਰ', ta: 'மொபைல் எண்',
     },
     sendOtp: {
-      en: 'Send OTP',
-      gu: 'OTP મોકલો',
-      hi: 'OTP भेजें',
-      mr: 'OTP पाठवा',
-      pa: 'OTP ਭੇਜੋ',
-      ta: 'OTP அனுப்பு',
+      en: 'Send OTP', gu: 'OTP મોકલો', hi: 'OTP भेजें',
+      mr: 'OTP पाठवा', pa: 'OTP ਭੇਜੋ', ta: 'OTP அனுப்பு',
     },
     otpLabel: {
-      en: 'Enter OTP',
-      gu: 'OTP દાખલ કરો',
-      hi: 'OTP दर्ज करें',
-      mr: 'OTP टाका',
-      pa: 'OTP ਦਾਖਲ ਕਰੋ',
-      ta: 'OTP உள்ளிடவும்',
+      en: 'Enter OTP', gu: 'OTP દાખલ કરો', hi: 'OTP दर्ज करें',
+      mr: 'OTP टाका', pa: 'OTP ਦਾਖਲ ਕਰੋ', ta: 'OTP உள்ளிடவும்',
     },
     verify: {
-      en: 'Verify & Login',
-      gu: 'ચકાસો અને લોગિન',
-      hi: 'सत्यापित करें',
-      mr: 'सत्यापित करा',
-      pa: 'ਪੁਸ਼ਟੀ ਕਰੋ',
-      ta: 'சரிபார்',
+      en: 'Verify & Login', gu: 'ચકાસો અને લોગિન', hi: 'सत्यापित करें',
+      mr: 'सत्यापित करा', pa: 'ਪੁਸ਼ਟੀ ਕਰੋ', ta: 'சரிபார்',
     },
     testHint: {
       en: 'For testing: use 9999999999 with OTP 123456',
@@ -74,28 +58,20 @@ export default function LoginPage() {
       ta: 'நான் தனியுரிமைக் கொள்கை மற்றும் விதிமுறைகளை ஏற்கிறேன். எனது மொபைல் எண் மற்றும் பெயர் பாதுகாப்பாக சேமிக்கப்படும்.',
     },
     privacyLink: {
-      en: 'Privacy Policy',
-      gu: 'ગોપનીયતા નીતિ',
-      hi: 'गोपनीयता नीति',
-      mr: 'गोपनीयता धोरण',
-      pa: 'ਪਰਦੇਦਾਰੀ ਨੀਤੀ',
-      ta: 'தனியுரிமைக் கொள்கை',
+      en: 'Privacy Policy', gu: 'ગોપનીયતા નીતિ', hi: 'गोपनीयता नीति',
+      mr: 'गोपनीयता धोरण', pa: 'ਪਰਦੇਦਾਰੀ ਨੀਤੀ', ta: 'தனியுரிமைக் கொள்கை',
     },
     and: {
-      en: 'and',
-      gu: 'અને',
-      hi: 'और',
-      mr: 'आणि',
-      pa: 'ਅਤੇ',
-      ta: 'மற்றும்',
+      en: 'and', gu: 'અને', hi: 'और',
+      mr: 'आणि', pa: 'ਅਤੇ', ta: 'மற்றும்',
     },
     terms: {
-      en: 'Terms',
-      gu: 'શરતો',
-      hi: 'शर्तें',
-      mr: 'अटी',
-      pa: 'ਸ਼ਰਤਾਂ',
-      ta: 'விதிமுறைகள்',
+      en: 'Terms', gu: 'શરતો', hi: 'शर्तें',
+      mr: 'अटी', pa: 'ਸ਼ਰਤਾਂ', ta: 'விதிமுறைகள்',
+    },
+    back: {
+      en: 'Back', gu: 'પાછળ', hi: 'पीछे',
+      mr: 'मागे', pa: 'ਪਿੱਛੇ', ta: 'பின்னால்'
     },
   } as const;
 
@@ -132,7 +108,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await verifyOtp(`+91${phone.replace(/\D/g, '')}`, otp);
-      navigate('/sell');
+      // Redirect to the intended page (default is /sell)
+      navigate(redirectTo);
     } catch (err: any) {
       setError(err?.message || 'OTP galat hai');
     } finally {
@@ -146,7 +123,7 @@ export default function LoginPage() {
         onClick={() => navigate('/')}
         className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))]"
       >
-        <ArrowLeft size={18} /> Back
+        <ArrowLeft size={18} /> {t.back[language]}
       </button>
 
       <div className="mt-8 mx-auto max-w-md">
@@ -197,7 +174,7 @@ export default function LoginPage() {
                 <Link
                   href="/terms"
                   className="font-bold text-[hsl(var(--primary))] underline"
-                  >
+                >
                   {t.terms[language]}
                 </Link>
               </span>
@@ -217,6 +194,7 @@ export default function LoginPage() {
               )}
             </button>
 
+            {/* Sirf development mode me dikhega */}
             {import.meta.env.DEV && (
               <div className="mt-4 rounded-xl border border-[#e6c879] bg-[#fbf0c9] p-3 text-xs text-[#66511b]">
                 <p className="font-bold">🧪 Testing mode:</p>
@@ -285,4 +263,4 @@ export default function LoginPage() {
       </div>
     </div>
   );
-      }
+    }
