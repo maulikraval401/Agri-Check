@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
-import { Loader2, Eye, Phone, Trash2, CheckCircle, RotateCcw, AlertCircle, Plus, ChevronDown, ChevronUp, MapPin, MessageCircle, ArrowLeft } from 'lucide-react';
+import { Loader2, Eye, Phone, Trash2, CheckCircle, RotateCcw, AlertCircle, Plus, ChevronDown, ChevronUp, MapPin, MessageCircle, ArrowLeft, RefreshCw } from 'lucide-react';
 import { supabase, type Listing } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -25,6 +25,7 @@ export default function MyListingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [renewing, setRenewing] = useState<string | null>(null);
 
   const lang = ['en', 'gu', 'hi', 'mr', 'pa', 'ta'].includes(language) ? language : 'en';
 
@@ -32,7 +33,7 @@ export default function MyListingsPage() {
     back: { en: 'Back', gu: 'પાછળ', hi: 'पीछे', mr: 'मागे', pa: 'ਪਿੱਛੇ', ta: 'பின்னால்' },
     title: { en: 'Meri Fasal', gu: 'મારી ફસલ', hi: 'मेरी फसल', mr: 'माझे पीक', pa: 'ਮੇਰੀ ਫ਼ਸਲ', ta: 'எனது பயிர்' },
     profile: { en: 'Profile', gu: 'પ્રોફાઇલ', hi: 'प्रोफाइल', mr: 'प्रोफाइल', pa: 'ਪ੍ਰੋਫਾਈਲ', ta: 'சுயவிவரம்' },
-    nayi: { en: 'Nayi', gu: 'નવી', hi: 'नई', mr: 'नवीन', pa: 'ਨਵੀਂ', ta: 'புதியது' },
+    nayi: { en: 'New', gu: 'નવી', hi: 'नई', mr: 'नवीन', pa: 'ਨਵੀਂ', ta: 'புதியது' },
     stats: { 
       en: 'listings — {active} active', gu: 'લિસ્ટિંગ — {active} એક્ટિવ', hi: 'लिस्टिंग — {active} सक्रिय', 
       mr: 'लिस्टिंग — {active} सक्रिय', pa: 'ਲਿਸਟਿੰਗਾਂ — {active} ਸਰਗਰਮ', ta: 'பட்டியல்கள் — {active} செயலில்' 
@@ -51,6 +52,8 @@ export default function MyListingsPage() {
     whatsapp: { en: 'WhatsApp', gu: 'WhatsApp', hi: 'WhatsApp', mr: 'WhatsApp', pa: 'WhatsApp', ta: 'WhatsApp' },
     soldMark: { en: 'Mark as Sold', gu: 'સોલ્ડ માર્ક કરો', hi: 'सोल्ड मार्क करें', mr: 'विकले म्हणून चिन्हांकित करा', pa: 'ਵਿਕਿਆ ਵਜੋਂ ਨਿਸ਼ਾਨ ਲਗਾਓ', ta: 'விற்பனையானதாகக் குறி' },
     backToSell: { en: 'Re-list', gu: 'ફરી વેચો', hi: 'फिर बेचें', mr: 'पुन्हा विका', pa: 'ਦੁਬਾਰਾ ਵੇਚੋ', ta: 'மீண்டும் விற்க' },
+    renewBtn: { en: 'Renew 30 Days', gu: '૩૦ દિવસ લંબાવો', hi: '30 दिन बढ़ाएं', mr: '३० दिवस वाढवा', pa: '30 ਦਿਨ ਵਧਾਓ', ta: '30 நாட்கள் நீட்டிக்க' },
+    renewing: { en: 'Renewing...', gu: 'લંબાવી રહ્યું છે...', hi: 'बढ़ रहा है...', mr: 'वाढवत आहे...', pa: 'ਵਧਾ ਰਿਹਾ ਹੈ...', ta: 'நீட்டிக்கிறது...' },
     delete: { en: 'Delete', gu: 'ડિલીટ કરો', hi: 'डिलीट करें', mr: 'हटवा', pa: 'ਮਿਟਾਓ', ta: 'நீக்கு' },
     deleting: { en: 'Deleting...', gu: 'ડિલીટ થઈ રહ્યું છે...', hi: 'डिलीट हो रहा है...', mr: 'हटवत आहे...', pa: 'ਮਿਟਾਇਆ ਜਾ ਰਿਹਾ ਹੈ...', ta: 'நீக்குகிறது...' }
   };
@@ -106,13 +109,9 @@ export default function MyListingsPage() {
 
   const fetchBuyers = async (listingId: string) => {
     if (buyersByListing[listingId]) return;
-
     setLoadingBuyers(listingId);
     try {
-      const { data, error: rpcError } = await supabase.rpc('get_listing_interests', {
-        p_listing_id: listingId,
-      });
-
+      const { data, error: rpcError } = await supabase.rpc('get_listing_interests', { p_listing_id: listingId });
       if (rpcError) throw rpcError;
       setBuyersByListing((prev) => ({ ...prev, [listingId]: data || [] }));
     } catch (err: any) {
@@ -140,27 +139,40 @@ export default function MyListingsPage() {
         .eq('id', listing.id);
 
       if (updateError) throw updateError;
-
-      setListings((prev) =>
-        prev.map((l) => (l.id === listing.id ? { ...l, status: newStatus } : l))
-      );
+      setListings((prev) => prev.map((l) => (l.id === listing.id ? { ...l, status: newStatus } : l)));
     } catch (err: any) {
       setError(err?.message || 'Status update nahi hua');
     }
   };
 
+  const handleRenew = async (listingId: string) => {
+    setRenewing(listingId);
+    setError('');
+    try {
+      const { data: newExpiry, error: rpcError } = await supabase.rpc('renew_listing', {
+        p_listing_id: listingId,
+      });
+
+      if (rpcError) throw rpcError;
+
+      setListings((prev) =>
+        prev.map((l) =>
+          l.id === listingId ? { ...l, status: 'active', expires_at: newExpiry } : l
+        )
+      );
+    } catch (err: any) {
+      setError(err?.message || 'Listing renew nahi hui');
+    } finally {
+      setRenewing(null);
+    }
+  };
+
   const handleDelete = async (listingId: string) => {
     if (!confirm('Ye listing delete karni hai? Ye wapas nahi aayegi.')) return;
-
     setDeleting(listingId);
     try {
-      const { error: deleteError } = await supabase
-        .from('listings')
-        .delete()
-        .eq('id', listingId);
-
+      const { error: deleteError } = await supabase.from('listings').delete().eq('id', listingId);
       if (deleteError) throw deleteError;
-
       setListings((prev) => prev.filter((l) => l.id !== listingId));
     } catch (err: any) {
       setError(err?.message || 'Delete nahi hua');
@@ -171,7 +183,10 @@ export default function MyListingsPage() {
 
   const contactBuyer = (buyer: InterestedBuyer, crop: string) => {
     const message = `Namaste ${buyer.buyer_name || 'bhai'},\n\nAapne Agri Check pe meri *${crop}* listing me interest dikhaya tha.\nKya aapko abhi bhi chahiye?\n\n— Agri Check app se`;
-    window.open(`https://wa.me/91${buyer.buyer_phone}?text=${encodeURIComponent(message)}`, '_blank');
+    
+    // Double 91 fix
+    const cleanPhone = buyer.buyer_phone.replace(/^\+?91/, '').replace(/\D/g, '');
+    window.open(`https://wa.me/91${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   const formatDate = (dateStr: string) => {
@@ -192,9 +207,8 @@ export default function MyListingsPage() {
         <Loader2 className="animate-spin" size={32} />
       </div>
     );
-  }
-
-  return (
+    }
+    return (
     <div className="page-enter min-h-screen px-4 py-6 pb-24">
       <button
         onClick={() => navigate('/mandi')}
@@ -259,6 +273,7 @@ export default function MyListingsPage() {
             const interestCount = interestCounts[listing.id] || 0;
             const isExpanded = expandedListing === listing.id;
             const buyers = buyersByListing[listing.id] || [];
+            const isExpired = listing.status === 'expired' || (listing.expires_at && new Date(listing.expires_at) < new Date());
 
             return (
               <div
@@ -266,17 +281,20 @@ export default function MyListingsPage() {
                 className={`rounded-xl border-2 bg-[hsl(var(--card))] p-4 ${
                   listing.status === 'sold'
                     ? 'border-green-200 opacity-90'
+                    : isExpired
+                    ? 'border-orange-200'
                     : 'border-[hsl(var(--border))]'
                 }`}
               >
+                {/* Status Badges */}
                 {listing.status === 'sold' && (
                   <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-800">
                     <CheckCircle size={12} /> {t.sold[lang]}
                   </div>
                 )}
-                {listing.status === 'expired' && (
-                  <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-700">
-                    {t.expired[lang]}
+                {(listing.status === 'expired' || isExpired) && listing.status !== 'sold' && (
+                  <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-bold text-orange-800">
+                    <AlertCircle size={12} /> {t.expired[lang]}
                   </div>
                 )}
 
@@ -379,21 +397,37 @@ export default function MyListingsPage() {
                   </div>
                 )}
 
+                {/* Actions */}
                 <div className="mt-3 grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => handleToggleSold(listing)}
-                    className={`flex min-h-11 items-center justify-center gap-1 rounded-xl text-xs font-bold ${
-                      listing.status === 'sold'
-                        ? 'border border-[hsl(var(--border))]'
-                        : 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
-                    }`}
-                  >
-                    {listing.status === 'sold' ? (
-                      <><RotateCcw size={14} /> {t.backToSell[lang]}</>
-                    ) : (
-                      <><CheckCircle size={14} /> {t.soldMark[lang]}</>
-                    )}
-                  </button>
+                  {isExpired && listing.status !== 'sold' ? (
+                    <button
+                      onClick={() => handleRenew(listing.id)}
+                      disabled={renewing === listing.id}
+                      className="flex min-h-11 items-center justify-center gap-1 rounded-xl bg-orange-600 text-xs font-bold text-white disabled:opacity-50"
+                    >
+                      {renewing === listing.id ? (
+                        <><Loader2 className="animate-spin" size={14} /> {t.renewing[lang]}</>
+                      ) : (
+                        <><RefreshCw size={14} /> {t.renewBtn[lang]}</>
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleToggleSold(listing)}
+                      className={`flex min-h-11 items-center justify-center gap-1 rounded-xl text-xs font-bold ${
+                        listing.status === 'sold'
+                          ? 'border border-[hsl(var(--border))]'
+                          : 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+                      }`}
+                    >
+                      {listing.status === 'sold' ? (
+                        <><RotateCcw size={14} /> {t.backToSell[lang]}</>
+                      ) : (
+                        <><CheckCircle size={14} /> {t.soldMark[lang]}</>
+                      )}
+                    </button>
+                  )}
+                  
                   <button
                     onClick={() => handleDelete(listing.id)}
                     disabled={deleting === listing.id}
