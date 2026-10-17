@@ -1,17 +1,24 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { ArrowLeft, LogOut, Trash2, Loader2, AlertTriangle, User, Phone, MapPin, Shield } from 'lucide-react';
+import { ArrowLeft, LogOut, Trash2, Loader2, AlertTriangle, User, Phone, MapPin, Shield, Edit2, Check, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 export default function ProfilePage() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, updateProfile } = useAuth();
   const { language } = useLanguage();
   const [, navigate] = useLocation();
+  
   const [loading, setLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [error, setError] = useState('');
+
+  // Edit Mode States
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(user?.name || '');
+  const [editVillage, setEditVillage] = useState(user?.village || '');
+  const [saving, setSaving] = useState(false);
 
   const lang = ['en', 'gu', 'hi', 'mr', 'pa', 'ta'].includes(language) ? language : 'en';
 
@@ -37,9 +44,28 @@ export default function ProfilePage() {
     dataUsage: { en: 'How your data is used', gu: 'તમારો ડેટા કેવી રીતે વપરાય છે', hi: 'आपका डेटा कैसे उपयोग होता है', mr: 'तुमचा डेटा कसा वापरला जातो', pa: 'ਤੁਹਾਡਾ ਡੇਟਾ ਕਿਵੇਂ ਵਰਤਿਆ ਜਾਂਦਾ ਹੈ', ta: 'உங்கள் தரவு எவ்வாறு பயன்படுத்தப்படுகிறது' },
     privacyLink: { en: 'Privacy Policy', gu: 'ગોપનીયતા નીતિ', hi: 'गोपनीयता नीति', mr: 'गोपनीयता धोरण', pa: 'ਪਰਦੇਦਾਰੀ ਨੀਤੀ', ta: 'தனியுரிமைக் கொள்கை' },
     loginReq: { en: 'Login to see profile', gu: 'પ્રોફાઇલ જોવા લોગિન કરો', hi: 'प्रोफाइल देखने के लिए लॉगिन करें', mr: 'प्रोफाइल पाहण्यासाठी लॉगिन करा', pa: 'ਪ੍ਰੋਫਾਈਲ ਦੇਖਣ ਲਈ ਲੌਗਇਨ ਕਰੋ', ta: 'சுயவிவரத்தைப் பார்க்க உள்நுழைக' },
-    loginBtn: { en: 'Login', gu: 'લોગિન', hi: 'लॉगिन', mr: 'લોગિન', pa: 'ਲੌਗਇਨ', ta: 'உள்நுழை' },
+    loginBtn: { en: 'Login', gu: 'લોગિન', hi: 'लॉगिन', mr: 'लॉगिन', pa: 'ਲੌਗਇਨ', ta: 'உள்நுழை' },
     back: { en: 'Back', gu: 'પાછળ', hi: 'पीछे', mr: 'मागे', pa: 'ਪਿੱਛੇ', ta: 'பின்னால்' },
-    deleting: { en: 'Deleting...', gu: 'ડિલીટ થઈ રહ્યું છે...', hi: 'डिलीट हो रहा है...', mr: 'हटवत आहे...', pa: 'ਮਿਟਾਇਆ ਜਾ ਰਿਹਾ ਹੈ...', ta: 'நீக்குகிறது...' }
+    deleting: { en: 'Deleting...', gu: 'ડિલીટ થઈ રહ્યું છે...', hi: 'डिलीट हो रहा है...', mr: 'हटवत आहे...', pa: 'ਮਿਟਾਇਆ ਜਾ ਰਿਹਾ ਹੈ...', ta: 'நீக்குகிறது...' },
+    editProfile: { en: 'Edit Profile', gu: 'પ્રોફાઇલ સુધારો', hi: 'प्रोफाइल सुधारें', mr: 'प्रोफाइल सुधारा', pa: 'ਪ੍ਰੋਫਾਈਲ ਸੋਧੋ', ta: 'சுயவிவரத்தைத் திருத்து' },
+    save: { en: 'Save Changes', gu: 'સેવ કરો', hi: 'सेव करें', mr: 'जतन करा', pa: 'ਸੇਵ ਕਰੋ', ta: 'சேமி' },
+    saving: { en: 'Saving...', gu: 'સેવ થઈ રહ્યું છે...', hi: 'सेव हो रहा है...', mr: 'जतन होत आहे...', pa: 'ਸੇਵ ਹੋ ਰਿਹਾ ਹੈ...', ta: 'சேமிக்கிறது...' }
+  };
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      await updateProfile({
+        name: editName,
+        village: editVillage,
+      });
+      setIsEditing(false);
+    } catch (err: any) {
+      setError(err?.message || 'Profile save nahi hui');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -59,33 +85,27 @@ export default function ProfilePage() {
     setError('');
     try {
       if (user) {
-        // 1. Fetch user's listings to get photo URLs
         const { data: listings } = await supabase
           .from('listings')
           .select('photos')
           .eq('user_id', user.id);
 
-        // 2. Extract storage paths from URLs (e.g., https://xxx.supabase.co/storage/v1/object/public/listing-photos/USER_ID/FILE.jpg)
         const pathsToDelete: string[] = [];
         if (listings) {
           listings.forEach((l) => {
             if (l.photos && Array.isArray(l.photos)) {
               l.photos.forEach((url: string) => {
                 const parts = url.split('/listing-photos/');
-                if (parts.length === 2) {
-                  pathsToDelete.push(parts[1]);
-                }
+                if (parts.length === 2) pathsToDelete.push(parts[1]);
               });
             }
           });
         }
 
-        // 3. Delete files from storage
         if (pathsToDelete.length > 0) {
           await supabase.storage.from('listing-photos').remove(pathsToDelete);
         }
 
-        // 4. Call RPC to delete auth user (CASCADE will remove listings, interests, and public.users)
         const { error: rpcError } = await supabase.rpc('delete_my_account');
         if (rpcError) throw rpcError;
       }
@@ -112,9 +132,8 @@ export default function ProfilePage() {
         </div>
       </div>
     );
-  }
-
-  return (
+           }
+    return (
     <div className="page-enter min-h-screen px-4 py-6 pb-24">
       <button onClick={() => navigate('/')} className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))]">
         <ArrowLeft size={18} /> {t.back[lang]}
@@ -125,27 +144,86 @@ export default function ProfilePage() {
       {error && <div className="mt-4 rounded-xl border border-[#e5b5a5] bg-[#f9e4dc] p-3 text-sm text-[#833b2e]">{error}</div>}
 
       <div className="mt-6 space-y-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4">
-        <div className="flex items-center gap-3">
-          <User size={18} className="text-[hsl(var(--muted-foreground))]" />
-          <div>
-            <p className="text-xs text-[hsl(var(--muted-foreground))]">{t.name[lang]}</p>
-            <p className="font-bold">{user.name || t.notSet[lang]}</p>
+        {!isEditing ? (
+          // READ ONLY VIEW
+          <>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <User size={18} className="text-[hsl(var(--muted-foreground))]" />
+                <div>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))]">{t.name[lang]}</p>
+                  <p className="font-bold">{user.name || t.notSet[lang]}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setEditName(user.name || '');
+                  setEditVillage(user.village || '');
+                  setIsEditing(true);
+                }}
+                className="rounded-lg border border-[hsl(var(--border))] p-2 text-xs font-bold"
+              >
+                <Edit2 size={14} /> Edit
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3 border-t border-[hsl(var(--border))] pt-3">
+              <Phone size={18} className="text-[hsl(var(--muted-foreground))]" />
+              <div>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">{t.phone[lang]}</p>
+                <p className="font-bold">{user.phone || '-'}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 border-t border-[hsl(var(--border))] pt-3">
+              <MapPin size={18} className="text-[hsl(var(--muted-foreground))]" />
+              <div>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">{t.village[lang]}</p>
+                <p className="font-bold">{user.village || t.notSet[lang]}</p>
+              </div>
+            </div>
+          </>
+        ) : (
+          // EDIT VIEW
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-bold text-[hsl(var(--muted-foreground))]">{t.name[lang]}</label>
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Ramesh Patel"
+                className="mt-1 min-h-12 w-full rounded-xl border border-[hsl(var(--border))] px-3 text-sm outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-[hsl(var(--muted-foreground))]">{t.village[lang]}</label>
+              <input
+                type="text"
+                value={editVillage}
+                onChange={(e) => setEditVillage(e.target.value)}
+                placeholder="Rajkot"
+                className="mt-1 min-h-12 w-full rounded-xl border border-[hsl(var(--border))] px-3 text-sm outline-none"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <button
+                onClick={() => setIsEditing(false)}
+                disabled={saving}
+                className="flex min-h-11 items-center justify-center gap-1 rounded-xl border border-[hsl(var(--border))] text-xs font-bold disabled:opacity-50"
+              >
+                <X size={14} /> {t.cancel[lang]}
+              </button>
+              <button
+                onClick={handleSaveProfile}
+                disabled={saving}
+                className="flex min-h-11 items-center justify-center gap-1 rounded-xl bg-[hsl(var(--primary))] text-xs font-bold text-[hsl(var(--primary-foreground))] disabled:opacity-50"
+              >
+                {saving ? <><Loader2 className="animate-spin" size={14} /> {t.saving[lang]}</> : <><Check size={14} /> {t.save[lang]}</>}
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-3 border-t border-[hsl(var(--border))] pt-3">
-          <Phone size={18} className="text-[hsl(var(--muted-foreground))]" />
-          <div>
-            <p className="text-xs text-[hsl(var(--muted-foreground))]">{t.phone[lang]}</p>
-            <p className="font-bold">{user.phone || '-'}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 border-t border-[hsl(var(--border))] pt-3">
-          <MapPin size={18} className="text-[hsl(var(--muted-foreground))]" />
-          <div>
-            <p className="text-xs text-[hsl(var(--muted-foreground))]">{t.village[lang]}</p>
-            <p className="font-bold">{user.village || t.notSet[lang]}</p>
-          </div>
-        </div>
+        )}
       </div>
 
       <div className="mt-6 space-y-3">
@@ -186,4 +264,4 @@ export default function ProfilePage() {
       </div>
     </div>
   );
-            }
+                                 }
