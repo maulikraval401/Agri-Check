@@ -32,86 +32,67 @@ function getCategory(commodity: string): 'crop' | 'vegetable' | 'other' {
   return 'other';
 }
 
-// Ek commodity ke liye alag API call
-async function fetchByCommodity(commodity: string): Promise<any[]> {
-  try {
-    const url = `https://api.data.gov.in/resource/${RESOURCE_ID}?api-key=${API_KEY}&format=json&limit=50&filters[state.keyword]=Gujarat&filters[commodity]=${encodeURIComponent(commodity)}`;
-    const res = await fetch(url);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.records || [];
-  } catch {
-    return [];
-  }
-}
+// Cache variables
+const CACHE_KEY = 'agri_mandi_cache';
+const CACHE_TIME = 30 * 60 * 1000; // 30 minutes
 
 export async function fetchMandiPrices(): Promise<MandiPrice[]> {
   try {
-    // Pehle saara data fetch kar
-    const url = `https://api.data.gov.in/resource/${RESOURCE_ID}?api-key=${API_KEY}&format=json&limit=1000&filters[state.keyword]=Gujarat`;
-    const res = await fetch(url);
-
-    let records: any[] = [];
-    if (res.ok) {
-      const data = await res.json();
-      records = data.records || [];
+    // 1. Check Cache first
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const { timestamp, data } = JSON.parse(cached);
+      if (Date.now() - timestamp < CACHE_TIME) {
+        return data;
+      }
     }
 
-    // Target crops ke liye alag calls
-    const cropResults = await Promise.all(
-      ['Cotton', 'Groundnut', 'Wheat', 'Bajra', 'Cumin'].map(fetchByCommodity),
-    );
+    // 2. Fetch from API
+    const url = `https://api.data.gov.in/resource/${RESOURCE_ID}?api-key=${API_KEY}&format=json&limit=2000&filters[state.keyword]=Gujarat`;
+    const res = await fetch(url);
 
-    // Sabhi records ko combine kar
-    const allRecords = [...records, ...cropResults.flat()];
+    if (!res.ok) {
+      throw new Error('API failed');
+    }
 
-    // Sirf crops aur vegetables
-    const filtered = allRecords.filter((r: any) => {
-      const cat = getCategory(r.commodity || '');
-      return cat === 'crop' || cat === 'vegetable';
-    });
+    const data = await res.json();
+    const records = data.records || [];
 
-    // Unique by commodity
-    const seen = new Set<string>();
-    const unique: any[] = [];
-    filtered.forEach((r: any) => {
-      if (!seen.has(r.commodity)) {
-        seen.add(r.commodity);
-        unique.push(r);
-      }
-    });
+    if (records.length === 0) {
+      return [];
+    }
 
-    // Sort: crops first
-    unique.sort((a, b) => {
-      const catA = getCategory(a.commodity);
-      const catB = getCategory(b.commodity);
-      if (catA === catB) return 0;
-      return catA === 'crop' ? -1 : 1;
-    });
+    // 3. Process records (Keep ALL markets, no deduplication by commodity)
+    const mappedData: MandiPrice[] = records.map((r: any) => {
+      // Fix names to match app UI
+      let name = r.commodity || 'Unknown';
+      if (name === 'Paddy') name = 'Rice';
+      if (name === 'Soyabean') name = 'Soybean';
 
-    if (unique.length === 0) return getFallbackData();
+      return {
+        market: r.market || r.district || 'Unknown',
+        commodity: name,
+        minPrice: parseInt(r.min_price) || 0,
+        maxPrice: parseInt(r.max_price) || 0,
+        modalPrice: parseInt(r.modal_price) || 0,
+        date: r.arrival_date || 'Today',
+        category: getCategory(name),
+      };
+    }).filter((r) => r.category !== 'other' && r.modalPrice > 0);
 
-    return unique.slice(0, 40).map((r: any) => ({
-      market: r.market || r.district || 'Unknown',
-      commodity: r.commodity || 'Unknown',
-      minPrice: parseInt(r.min_price) || 0,
-      maxPrice: parseInt(r.max_price) || 0,
-      modalPrice: parseInt(r.modal_price) || 0,
-      date: r.arrival_date || 'Today',
-      category: getCategory(r.commodity || ''),
-    }));
+    // 4. Save to Cache
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        timestamp: Date.now(),
+        data: mappedData
+      }));
+    } catch {}
+
+    return mappedData;
+
   } catch (err) {
     console.error('Mandi fetch error:', err);
-    return getFallbackData();
+    // Fallback data is REMOVED. Return empty array so UI shows "No data".
+    return [];
   }
-}
-
-function getFallbackData(): MandiPrice[] {
-  return [
-    { market: 'Anand', commodity: 'Cotton', minPrice: 6800, maxPrice: 7300, modalPrice: 7100, date: 'Today', category: 'crop' },
-    { market: 'Rajkot', commodity: 'Groundnut', minPrice: 5500, maxPrice: 6100, modalPrice: 5800, date: 'Today', category: 'crop' },
-    { market: 'Ahmedabad', commodity: 'Wheat', minPrice: 2200, maxPrice: 2500, modalPrice: 2350, date: 'Today', category: 'crop' },
-    { market: 'Junagadh', commodity: 'Bajra', minPrice: 1800, maxPrice: 2100, modalPrice: 1950, date: 'Today', category: 'crop' },
-    { market: 'Mehsana', commodity: 'Cumin', minPrice: 18000, maxPrice: 22000, modalPrice: 20000, date: 'Today', category: 'crop' },
-  ];
-}
+      }
