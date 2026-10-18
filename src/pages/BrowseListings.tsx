@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
-import { Loader2, Search, MapPin, Phone, User, Calendar, AlertCircle, CheckCircle2, ArrowLeft, Star, X } from 'lucide-react';
+import { Loader2, Search, MapPin, Phone, User, Calendar, AlertCircle, CheckCircle2, ArrowLeft, Star, X, Flag } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -43,6 +43,12 @@ export default function BrowseListingsPage() {
   const [ratingStars, setRatingStars] = useState(5);
   const [ratingReview, setRatingReview] = useState('');
   const [submittingRating, setSubmittingRating] = useState(false);
+
+  // Report States
+  const [reportListing, setReportListing] = useState<BrowseListing | null>(null);
+  const [reportReason, setReportReason] = useState('Fake Listing');
+  const [reportDetails, setReportDetails] = useState('');
+  const [submittingReport, setSubmittingReport] = useState(false);
   
   // User-wise contacted list
   const contactedKey = user ? `agri_contacted_listings_${user.id}` : 'agri_contacted_listings_guest';
@@ -76,13 +82,22 @@ export default function BrowseListingsPage() {
     farmer: { en: 'Farmer', gu: 'ખેડૂત', hi: 'किसान', mr: 'शेतकरी', pa: 'ਕਿਸਾਨ', ta: 'விவசாயி' },
     loadMore: { en: 'Load More', gu: 'વધુ લોડ કરો', hi: 'और लोड करें', mr: 'अधिक लोड करा', pa: 'ਹੋਰ ਲੋਡ ਕਰੋ', ta: 'மேலும் ஏற்று' },
     loading: { en: 'Loading...', gu: 'લોડ થઈ રહ્યું છે...', hi: 'लोड हो रहा है...', mr: 'लोड होत आहे...', pa: 'ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...', ta: 'ஏற்றுகிறது...' },
-    
-    // New Rating Translations
     rateSeller: { en: 'Rate', gu: 'રેટ કરો', hi: 'रेट करें', mr: 'रेट करा', pa: 'ਰੇਟ ਕਰੋ', ta: 'மதிப்பிடு' },
-    submit: { en: 'Submit Rating', gu: 'સબમિટ કરો', hi: 'जमा करें', mr: 'सबमिट करा', pa: 'ਸਬਮਿਟ ਕਰੋ', ta: 'சமர்ப்பிக்கவும்' },
+    submit: { en: 'Submit', gu: 'સબમિટ કરો', hi: 'जमा करें', mr: 'सबमिट करा', pa: 'ਸਬਮਿਟ ਕਰੋ', ta: 'சமர்ப்பிக்கவும்' },
     reviewPh: { en: 'Write a review (optional)...', gu: 'સમીક્ષા લખો (વૈકલ્પિક)...', hi: 'समीक्षा लिखें (वैकल्पिक)...', mr: 'पुनरावलोकन लिहा (पर्यायी)...', pa: 'ਸਮੀਖਿਆ ਲਿਖੋ (ਵਿਕਲਪਿਕ)...', ta: 'விமர்சனம் எழுதுங்கள் (விருப்பம்)...' },
     ratingSuccess: { en: 'Rating submitted!', gu: 'રેટિંગ સબમિટ થઈ ગઈ!', hi: 'रेटिंग जमा हो गई!', mr: 'रेटिंग सबमिट झाले!', pa: 'ਰੇਟਿੰਗ ਸਬਮਿਟ ਹੋ ਗਈ!', ta: 'மதிப்பீடு சமர்ப்பிக்கப்பட்டது!' },
-    alreadyRated: { en: 'You already rated this seller for this listing', gu: 'તમે આ લિસ્ટિંગ માટે રેટ કરી ચૂક્યા છો', hi: 'आप इस लिस्टिंग के लिए रेट कर चुके हैं', mr: 'तुम्ही या लिस्टिंगसाठी आधीच रेट केले आहे', pa: 'ਤੁਸੀਂ ਇਸ ਲਿਸਟਿੰਗ ਲਈ ਪਹਿਲਾਂ ਹੀ ਰੇਟ ਕੀਤਾ ਹੈ', ta: 'இந்த பட்டியலுக்கு நீங்கள் ஏற்கனவே மதிப்பிட்டுள்ளீர்கள்' }
+    alreadyRated: { en: 'You already rated this seller for this listing', gu: 'તમે આ લિસ્ટિંગ માટે રેટ કરી ચૂક્યા છો', hi: 'आप इस लिस्टिंग के लिए रेट कर चुके हैं', mr: 'तुम्ही या लिस्टिंगसाठी आधीच रेट केले आहे', pa: 'ਤੁਸੀਂ ਇਸ ਲਿਸਟਿੰਗ ਲਈ ਪਹਿਲਾਂ ਹੀ ਰੇਟ ਕੀਤਾ ਹੈ', ta: 'இந்த பட்டியலுக்கு நீங்கள் ஏற்கனவே மதிப்பிட்டுள்ளீர்கள்' },
+    
+    // Report Translations
+    report: { en: 'Report', gu: 'રિપોર્ટ', hi: 'रिपोर्ट', mr: 'रिपोर्ट', pa: 'ਰਿਪੋਰਟ', ta: 'புகார்' },
+    reportTitle: { en: 'Report Listing', gu: 'લિસ્ટિંગ રિપોર્ટ કરો', hi: 'लिस्टिंग रिपोर्ट करें', mr: 'लिस्टिंग रिपोर्ट करा', pa: 'ਲਿਸਟਿੰਗ ਰਿਪੋਰਟ ਕਰੋ', ta: 'பட்டியலைப் புகாரளி' },
+    reasonFake: { en: 'Fake Listing', gu: 'ખોટી લિસ્ટિંગ', hi: 'फर्जी लिस्टिंग', mr: 'बनावट लिस्टिंग', pa: 'ਫਰਜ਼ੀ ਲਿਸਟਿੰਗ', ta: 'போலி பட்டியல்' },
+    reasonSpam: { en: 'Spam / Wrong Info', gu: 'સ્પામ / ખોટી માહિતી', hi: 'स्पैम / गलत जानकारी', mr: 'स्पॅम / चुकीची माहिती', pa: 'ਸਪੈਮ / ਗਲਤ ਜਾਣਕਾਰੀ', ta: 'ஸ்பேம் / தவறான தகவல்' },
+    reasonSold: { en: 'Already Sold', gu: 'પહેલેથી વેચાઈ ગયું', hi: 'पहले ही बिक चुका है', mr: 'आधीच विकले', pa: 'ਪਹਿਲਾਂ ਹੀ ਵਿਕ ਗਿਆ', ta: 'ஏற்கனவே விற்கப்பட்டது' },
+    reasonOther: { en: 'Other', gu: 'અન્ય', hi: 'अन्य', mr: 'इतर', pa: 'ਹੋਰ', ta: 'மற்றவை' },
+    detailsPh: { en: 'More details (optional)...', gu: 'વધુ વિગતો (વૈકલ્પિક)...', hi: 'अधिक जानकारी (वैकल्पिक)...', mr: 'अधिक तपशील (पर्यायी)...', pa: 'ਹੋਰ ਜਾਣਕਾਰੀ (ਵਿਕਲਪਿਕ)...', ta: 'மேலும் விவரங்கள் (விருப்பம்)...' },
+    reportSuccess: { en: 'Report submitted. Thank you!', gu: 'રિપોર્ટ સબમિટ થઈ ગયો. આભાર!', hi: 'रिपोर्ट जमा हो गई। धन्यवाद!', mr: 'रिपोर्ट सबमिट झाला. धन्यवाद!', pa: 'ਰਿਪੋਰਟ ਸਬਮਿਟ ਹੋ ਗਈ। ਧੰਨਵਾਦ!', ta: 'புகார் சமர்ப்பிக்கப்பட்டது. நன்றி!' },
+    alreadyReported: { en: 'You already reported this listing.', gu: 'તમે આ લિસ્ટિંગ પહેલેથી રિપોર્ટ કરી છે.', hi: 'आप इस लिस्टिंग को पहले ही रिपोर्ट कर चुके हैं।', mr: 'तुम्ही ही लिस्टिंग आधीच रिपोर्ट केली आहे.', pa: 'ਤੁਸੀਂ ਇਸ ਲਿਸਟਿੰਗ ਨੂੰ ਪਹਿਲਾਂ ਹੀ ਰਿਪੋਰਟ ਕੀਤਾ ਹੈ।', ta: 'இந்த பட்டியலை நீங்கள் ஏற்கனவே புகாரளித்துள்ளீர்கள்.' }
   };
 
   useEffect(() => {
@@ -217,14 +232,13 @@ export default function BrowseListingsPage() {
       });
 
       if (error) {
-        if (error.code === '23505') { // Unique violation
+        if (error.code === '23505') {
           alert(t.alreadyRated[lang]);
         } else {
           throw error;
         }
       } else {
         alert(t.ratingSuccess[lang]);
-        // Update listing locally so rating count increases visually
         setListings(prev => prev.map(l => 
           l.id === ratingListing.id ? { ...l, seller_rating: ratingStars } : l 
         ));
@@ -236,6 +250,40 @@ export default function BrowseListingsPage() {
       setRatingListing(null);
       setRatingStars(5);
       setRatingReview('');
+    }
+  };
+
+  const submitReport = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (!reportListing) return;
+
+    setSubmittingReport(true);
+    try {
+      const { error } = await supabase.from('reports').insert({
+        listing_id: reportListing.id,
+        reporter_id: user.id,
+        reason: reportReason,
+        details: reportDetails.trim() || null
+      });
+
+      if (error) {
+        if (error.code === '23505') {
+          alert(t.alreadyReported[lang]);
+        } else {
+          throw error;
+        }
+      } else {
+        alert(t.reportSuccess[lang]);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Report failed');
+    } finally {
+      setSubmittingReport(false);
+      setReportListing(null);
+      setReportDetails('');
     }
   };
 
@@ -258,9 +306,8 @@ export default function BrowseListingsPage() {
         <Loader2 className="animate-spin" size={32} />
       </div>
     );
-  }
-
-  return (
+              }
+    return (
     <div className="page-enter min-h-screen px-4 py-6 pb-24 relative">
       <button onClick={() => navigate('/mandi')} className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))]">
         <ArrowLeft size={18} /> {t.back[lang]}
@@ -373,14 +420,21 @@ export default function BrowseListingsPage() {
                     <span className="text-[hsl(var(--muted-foreground))]">⭐ {listing.seller_rating.toFixed(1)}</span>
                   ) : null}
                   
-                  {/* Rating Button */}
                   {!isOwnListing && (
-                    <button 
-                      onClick={() => setRatingListing(listing)} 
-                      className="ml-2 rounded bg-[hsl(var(--muted))] px-1.5 py-0.5 text-[10px] font-bold text-[hsl(var(--foreground))] hover:bg-[hsl(var(--border))]"
-                    >
-                      {t.rateSeller[lang]}
-                    </button>
+                    <div className="flex items-center gap-1 ml-2">
+                      <button 
+                        onClick={() => setRatingListing(listing)} 
+                        className="rounded bg-[hsl(var(--muted))] px-1.5 py-0.5 text-[10px] font-bold text-[hsl(var(--foreground))] hover:bg-[hsl(var(--border))]"
+                      >
+                        {t.rateSeller[lang]}
+                      </button>
+                      <button 
+                        onClick={() => setReportListing(listing)} 
+                        className="rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-bold text-red-600 hover:bg-red-100 flex items-center gap-0.5"
+                      >
+                        <Flag size={10} /> {t.report[lang]}
+                      </button>
+                    </div>
                   )}
                 </div>
                 
@@ -422,7 +476,6 @@ export default function BrowseListingsPage() {
         })}
       </div>
 
-      {/* Load More Button */}
       {hasMore && (
         <div className="mt-6 flex justify-center">
           <button
@@ -481,7 +534,57 @@ export default function BrowseListingsPage() {
           </div>
         </div>
       )}
+
+      {/* Report Modal */}
+      {reportListing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-[hsl(var(--card))] p-5 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-red-600 flex items-center gap-2">
+                <Flag size={18} /> {t.reportTitle[lang]}
+              </h3>
+              <button onClick={() => setReportListing(null)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="space-y-3 mb-4">
+              <label className="flex items-center gap-2 text-sm">
+                <input type="radio" name="reason" value="Fake Listing" checked={reportReason === 'Fake Listing'} onChange={(e) => setReportReason(e.target.value)} className="w-4 h-4 text-red-600" />
+                {t.reasonFake[lang]}
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="radio" name="reason" value="Spam / Wrong Info" checked={reportReason === 'Spam / Wrong Info'} onChange={(e) => setReportReason(e.target.value)} className="w-4 h-4 text-red-600" />
+                {t.reasonSpam[lang]}
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="radio" name="reason" value="Already Sold" checked={reportReason === 'Already Sold'} onChange={(e) => setReportReason(e.target.value)} className="w-4 h-4 text-red-600" />
+                {t.reasonSold[lang]}
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="radio" name="reason" value="Other" checked={reportReason === 'Other'} onChange={(e) => setReportReason(e.target.value)} className="w-4 h-4 text-red-600" />
+                {t.reasonOther[lang]}
+              </label>
+            </div>
+
+            <textarea
+              value={reportDetails}
+              onChange={(e) => setReportDetails(e.target.value)}
+              placeholder={t.detailsPh[lang]}
+              className="w-full rounded-xl border border-[hsl(var(--border))] bg-transparent p-3 text-sm outline-none resize-none h-20"
+            />
+
+            <button
+              onClick={submitReport}
+              disabled={submittingReport}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-3 text-sm font-bold text-white disabled:opacity-50"
+            >
+              {submittingReport && <Loader2 className="animate-spin" size={16} />}
+              {t.submit[lang]}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
-
+        }
