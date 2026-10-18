@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
-import { Loader2, Search, MapPin, Phone, User, Calendar, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Loader2, Search, MapPin, Phone, User, Calendar, AlertCircle, CheckCircle2, ArrowLeft, Star, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -38,6 +38,12 @@ export default function BrowseListingsPage() {
   const [error, setError] = useState('');
   const [contacting, setContacting] = useState<string | null>(null);
   
+  // Rating States
+  const [ratingListing, setRatingListing] = useState<BrowseListing | null>(null);
+  const [ratingStars, setRatingStars] = useState(5);
+  const [ratingReview, setRatingReview] = useState('');
+  const [submittingRating, setSubmittingRating] = useState(false);
+  
   // User-wise contacted list
   const contactedKey = user ? `agri_contacted_listings_${user.id}` : 'agri_contacted_listings_guest';
   const [contactedIds, setContactedIds] = useState<string[]>([]);
@@ -69,7 +75,14 @@ export default function BrowseListingsPage() {
     contacting: { en: 'Contacting...', gu: 'સંપર્ક થઈ રહ્યો છે...', hi: 'संपर्क हो रहा है...', mr: 'संपर्क होत आहे...', pa: 'ਸੰਪਰਕ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ...', ta: 'தொடர்பு கொள்கிறது...' },
     farmer: { en: 'Farmer', gu: 'ખેડૂત', hi: 'किसान', mr: 'शेतकरी', pa: 'ਕਿਸਾਨ', ta: 'விவசாயி' },
     loadMore: { en: 'Load More', gu: 'વધુ લોડ કરો', hi: 'और लोड करें', mr: 'अधिक लोड करा', pa: 'ਹੋਰ ਲੋਡ ਕਰੋ', ta: 'மேலும் ஏற்று' },
-    loading: { en: 'Loading...', gu: 'લોડ થઈ રહ્યું છે...', hi: 'लोड हो रहा है...', mr: 'लोड होत आहे...', pa: 'ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...', ta: 'ஏற்றுகிறது...' }
+    loading: { en: 'Loading...', gu: 'લોડ થઈ રહ્યું છે...', hi: 'लोड हो रहा है...', mr: 'लोड होत आहे...', pa: 'ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...', ta: 'ஏற்றுகிறது...' },
+    
+    // New Rating Translations
+    rateSeller: { en: 'Rate', gu: 'રેટ કરો', hi: 'रेट करें', mr: 'रेट करा', pa: 'ਰੇਟ ਕਰੋ', ta: 'மதிப்பிடு' },
+    submit: { en: 'Submit Rating', gu: 'સબમિટ કરો', hi: 'जमा करें', mr: 'सबमिट करा', pa: 'ਸਬਮਿਟ ਕਰੋ', ta: 'சமர்ப்பிக்கவும்' },
+    reviewPh: { en: 'Write a review (optional)...', gu: 'સમીક્ષા લખો (વૈકલ્પિક)...', hi: 'समीक्षा लिखें (वैकल्पिक)...', mr: 'पुनरावलोकन लिहा (पर्यायी)...', pa: 'ਸਮੀਖਿਆ ਲਿਖੋ (ਵਿਕਲਪਿਕ)...', ta: 'விமர்சனம் எழுதுங்கள் (விருப்பம்)...' },
+    ratingSuccess: { en: 'Rating submitted!', gu: 'રેટિંગ સબમિટ થઈ ગઈ!', hi: 'रेटिंग जमा हो गई!', mr: 'रेटिंग सबमिट झाले!', pa: 'ਰੇਟਿੰਗ ਸਬਮਿਟ ਹੋ ਗਈ!', ta: 'மதிப்பீடு சமர்ப்பிக்கப்பட்டது!' },
+    alreadyRated: { en: 'You already rated this seller for this listing', gu: 'તમે આ લિસ્ટિંગ માટે રેટ કરી ચૂક્યા છો', hi: 'आप इस लिस्टिंग के लिए रेट कर चुके हैं', mr: 'तुम्ही या लिस्टिंगसाठी आधीच रेट केले आहे', pa: 'ਤੁਸੀਂ ਇਸ ਲਿਸਟਿੰਗ ਲਈ ਪਹਿਲਾਂ ਹੀ ਰੇਟ ਕੀਤਾ ਹੈ', ta: 'இந்த பட்டியலுக்கு நீங்கள் ஏற்கனவே மதிப்பிட்டுள்ளீர்கள்' }
   };
 
   useEffect(() => {
@@ -89,7 +102,7 @@ export default function BrowseListingsPage() {
         }, 300);
       }
     } catch {}
-  }, [user]); // Re-run if user changes (login/logout)
+  }, [user]);
 
   const fetchListings = async (pageNumber: number, isInitial = false) => {
     if (isInitial) setLoading(true);
@@ -186,6 +199,46 @@ export default function BrowseListingsPage() {
     }
   };
 
+  const submitRating = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (!ratingListing) return;
+
+    setSubmittingRating(true);
+    try {
+      const { error } = await supabase.from('ratings').insert({
+        listing_id: ratingListing.id,
+        reviewer_id: user.id,
+        reviewee_id: ratingListing.user_id,
+        rating: ratingStars,
+        review_text: ratingReview.trim() || null
+      });
+
+      if (error) {
+        if (error.code === '23505') { // Unique violation
+          alert(t.alreadyRated[lang]);
+        } else {
+          throw error;
+        }
+      } else {
+        alert(t.ratingSuccess[lang]);
+        // Update listing locally so rating count increases visually
+        setListings(prev => prev.map(l => 
+          l.id === ratingListing.id ? { ...l, seller_rating: ratingStars } : l 
+        ));
+      }
+    } catch (err: any) {
+      alert(err.message || 'Rating failed');
+    } finally {
+      setSubmittingRating(false);
+      setRatingListing(null);
+      setRatingStars(5);
+      setRatingReview('');
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     const now = new Date();
@@ -205,9 +258,10 @@ export default function BrowseListingsPage() {
         <Loader2 className="animate-spin" size={32} />
       </div>
     );
-               }
-    return (
-    <div className="page-enter min-h-screen px-4 py-6 pb-24">
+  }
+
+  return (
+    <div className="page-enter min-h-screen px-4 py-6 pb-24 relative">
       <button onClick={() => navigate('/mandi')} className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))]">
         <ArrowLeft size={18} /> {t.back[lang]}
       </button>
@@ -318,7 +372,18 @@ export default function BrowseListingsPage() {
                   {listing.seller_rating ? (
                     <span className="text-[hsl(var(--muted-foreground))]">⭐ {listing.seller_rating.toFixed(1)}</span>
                   ) : null}
+                  
+                  {/* Rating Button */}
+                  {!isOwnListing && (
+                    <button 
+                      onClick={() => setRatingListing(listing)} 
+                      className="ml-2 rounded bg-[hsl(var(--muted))] px-1.5 py-0.5 text-[10px] font-bold text-[hsl(var(--foreground))] hover:bg-[hsl(var(--border))]"
+                    >
+                      {t.rateSeller[lang]}
+                    </button>
+                  )}
                 </div>
+                
                 {listing.ready_date && (
                   <div className="flex items-center gap-1 text-xs text-[hsl(var(--muted-foreground))]">
                     <Calendar size={12} />
@@ -370,6 +435,53 @@ export default function BrowseListingsPage() {
           </button>
         </div>
       )}
+
+      {/* Rating Modal */}
+      {ratingListing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-[hsl(var(--card))] p-5 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold">{t.rateSeller[lang]}</h3>
+              <button onClick={() => setRatingListing(null)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <p className="text-sm text-gray-500 mb-4 text-center">
+              {ratingListing.seller_name || t.farmer[lang]}
+            </p>
+            
+            <div className="flex justify-center gap-2 mb-5">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button key={star} onClick={() => setRatingStars(star)} className="p-1 transition-transform hover:scale-110">
+                  <Star 
+                    size={36} 
+                    fill={star <= ratingStars ? "#facc15" : "none"} 
+                    className={star <= ratingStars ? "text-yellow-400" : "text-gray-300"} 
+                  />
+                </button>
+              ))}
+            </div>
+
+            <textarea
+              value={ratingReview}
+              onChange={(e) => setRatingReview(e.target.value)}
+              placeholder={t.reviewPh[lang]}
+              className="w-full rounded-xl border border-[hsl(var(--border))] bg-transparent p-3 text-sm outline-none resize-none h-24"
+            />
+
+            <button
+              onClick={submitRating}
+              disabled={submittingRating}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[hsl(var(--primary))] py-3 text-sm font-bold text-[hsl(var(--primary-foreground))] disabled:opacity-50"
+            >
+              {submittingRating && <Loader2 className="animate-spin" size={16} />}
+              {t.submit[lang]}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
-          }
+}
+
