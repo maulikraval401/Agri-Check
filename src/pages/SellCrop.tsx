@@ -80,7 +80,7 @@ export default function SellCropPage() {
     publishHint: { en: 'Listing will show on "Sabki Fasal"', gu: 'લિસ્ટિંગ "બધાની ફસલ" પર દેખાશે', hi: 'लिस्टिंग "सबकी फसल" पर दिखेगी', mr: 'लिस्टिंग "सर्वांचे पीक" वर दिसेल', pa: 'ਲਿਸਟਿੰਗ "ਸਭ ਦੀ ਫ਼ਸਲ" ਤੇ ਦਿਖੇਗੀ', ta: 'பட்டியல் "அனைவரின் பயிர்" பக்கத்தில் தோன்றும்' },
     shareBtn: { en: 'WhatsApp', gu: 'WhatsApp', hi: 'WhatsApp', mr: 'WhatsApp', pa: 'WhatsApp', ta: 'WhatsApp' },
     copyBtn: { en: 'Copy', gu: 'કોપી કરો', hi: 'कॉपी करें', mr: 'कॉपी करा', pa: 'ਕਾਪੀ ਕਰੋ', ta: 'நகலெடு' },
-    copiedBtn: { en: 'Copied', gu: 'કોપી થયું', hi: 'कॉपी हो गया', mr: 'કોપી થયું', pa: 'ਕਾਪੀ ਹੋ ਗਿਆ', ta: 'நகலெடுக்கப்பட்டது' },
+    copiedBtn: { en: 'Copied', gu: 'કોપી થયું', hi: 'कॉपी हो गया', mr: 'कॉपी झाले', pa: 'ਕਾਪੀ ਹੋ ਗਿਆ', ta: 'நகலெடுக்கப்பட்டது' },
     safety: { en: 'Safety Warning', gu: 'સુરક્ષા ચેતવણી', hi: 'सुरक्षा चेतावनी', mr: 'सुरक्षा इशारा', pa: 'ਸੁਰੱਖਿਆ ਚੇਤਾਵਨੀ', ta: 'பாதுகாப்பு எச்சரிக்கை' },
     safetyDesc: { en: 'Never give/take advance money. Verify goods and buyer first.', gu: 'ક્યારેય એડવાન્સ પૈસા ન આપો/લો. પહેલા માલ અને ખરીદનારની ચકાસણી કરો.', hi: 'कभी एडवांस पैसे न दें/लें। पहले माल और खरीदार की जांच करें।', mr: 'कधीही ॲडव्हान्स पैसे देऊ/घेऊ नका. आधी माल आणि खरेदीदाराची तपासणी करा.', pa: 'ਕਦੇ ਐਡਵਾਂਸ ਪੈਸੇ ਨਾ ਦਿਓ/ਲਓ। ਪਹਿਲਾਂ ਮਾਲ ਅਤੇ ਖਰੀਦਦਾਰ ਦੀ ਜਾਂਚ ਕਰੋ।', ta: 'முன்பணம் கொடுக்கவோ வாங்கவோ வேண்டாம். முதலில் பொருள் மற்றும் வாங்குபவரை சரிபார்க்கவும்.' },
     legal: { en: 'This app only connects farmers and buyers. Actual trade through APMC or e-NAM. Agri Check is not responsible for any transaction.', gu: 'આ એપ ફક્ત ખેડૂત અને ખરીદનારને જોડે છે. વાસ્તવિક વેપાર APMC અથવા e-NAM દ્વારા. Agri Check કોઈપણ વ્યવહાર માટે જવાબદાર નથી.', hi: 'यह ऐप केवल किसान और खरीदार को जोड़ता है। वास्तविक व्यापार APMC या e-NAM के माध्यम से। Agri Check किसी भी लेन-देन के लिए जिम्मेदार नहीं है।', mr: 'हे ॲप फक्त शेतकरी आणि खरेदीदार जोडते. प्रत्यक्ष व्यापार APMC किंवा e-NAM द्वारे. Agri Check कोणत्याही व्यवहारासाठी जबाबदार नाही.', pa: 'ਇਹ ਐਪ ਸਿਰਫ਼ ਕਿਸਾਨ ਅਤੇ ਖਰੀਦਦਾਰ ਨੂੰ ਜੋੜਦੀ ਹੈ। ਅਸਲੀ ਵਪਾਰ APMC ਜਾਂ e-NAM ਰਾਹੀਂ। Agri Check ਕਿਸੇ ਵੀ ਲੈਣ-ਦੇਣ ਲਈ ਜ਼ਿੰਮੇਵਾਰ ਨਹੀਂ ਹੈ।', ta: 'இந்த செயலி விவசாயிகள் மற்றும் வாங்குபவர்களை மட்டுமே இணைக்கிறது. உண்மையான வணிகம் APMC அல்லது e-NAM மூலம். Agri Check எந்தவொரு பரிவர்த்தனைக்கும் பொறுப்பல்ல.' },
@@ -194,45 +194,38 @@ export default function SellCropPage() {
   };
 
   const uploadPhoto = async (): Promise<string | null> => {
-    if (uploadedPhotoUrl) return uploadedPhotoUrl;
-    if (!photo || !user) return null;
+  if (uploadedPhotoUrl) return uploadedPhotoUrl;
+  if (!photo || !user) return null;
 
-    setUploading(true);
-    try {
-      // 1. Canvas se resize aur EXIF remove karo
-      const resizedBlob = await resizeImage(photo);
-      
-      // 2. Naya filename banayo (kyunki ab file jpeg blob hai)
-      const fileName = `${user.id}/${Date.now()}.jpg`;
+  setUploading(true);
+  try {
+    // 1. Canvas se resize aur EXIF remove karo
+    const resizedBlob = await resizeImage(photo);
+    
+    // 2. Naya filename banayo
+    const fileName = `${user.id}/${Date.now()}.jpg`;
 
-      // 3. Upload resized Blob (na ki original photo)
-      const { error: uploadError } = await supabase.storage
-        .from('listing-photos')
-        .upload(fileName, resizedBlob, { 
-          contentType: 'image/jpeg', 
-          upsert: false 
-        });
-        
-      if (uploadError) throw uploadError;
+    // 3. Upload resized Blob
+    const { error: uploadError } = await supabase.storage
+      .from('listing-photos')
+      .upload(fileName, resizedBlob, { 
+        contentType: 'image/jpeg', 
+        upsert: false 
+      });
       
-      const { data } = supabase.storage.from('listing-photos').getPublicUrl(fileName);
-      setUploadedPhotoUrl(data.publicUrl);
-      return data.publicUrl;
-    } catch (err: any) {
-  const msg = err?.message || '';
-  if (msg.includes('10 active listings')) {
-    setError(lang === 'gu' ? 'તમારી 10 એક્ટિવ લિસ્ટિંગ થઈ ગઈ છે. પહેલા કોઈ લિસ્ટિંગ વેચો અથવા ડિલીટ કરો.' : lang === 'hi' ? 'आपकी 10 सक्रिय लिस्टिंग हो गई हैं। पहले कोई लिस्टिंग बेचें या डिलीट करें।' : 'Aapki 10 active listings ho chuki hain. Pehle koi listing bechein ya delete karein.');
-  } else if (msg.includes('duplicate')) {
-    setError(lang === 'gu' ? 'આ લિસ્ટિંગ પહેલેથી જ એક્ટિવ છે. ડુપ્લિકેટ લિસ્ટિંગ માન્ય નથી.' : lang === 'hi' ? 'यह लिस्टिंग पहले से ही सक्रिय है। डुप्लीकेट लिस्टिंग मान्य नहीं है।' : 'Ye listing already active hai. Duplicate listing allowed nahi hai.');
-  } else if (msg.includes('row-level security')) {
-    setError('Aapko iski permission nahi hai.');
-  } else {
-    setError(t.errPublish[lang]);
+    if (uploadError) throw uploadError;
+    
+    const { data } = supabase.storage.from('listing-photos').getPublicUrl(fileName);
+    setUploadedPhotoUrl(data.publicUrl);
+    return data.publicUrl;
+  } catch (err: any) {
+    // Sirf photo upload ka error yahan dikhega
+    setError(t.errUpload[lang]);
+    return null; // Error aane par null return karega
+  } finally {
+    setUploading(false);
   }
-} finally {
-      setUploading(false);
-    }
-  };
+};
 
   const buildMessage = () => {
     const cropEmoji = CROPS.find((c) => c.key === crop)?.emoji || '🌾';
@@ -249,39 +242,58 @@ export default function SellCropPage() {
     ].filter(Boolean);
     return lines.join('\n');
   };
+const handlePublish = async () => {
+  if (!crop || !quantity || !price || !district) {
+    setError(t.errMissing[lang]);
+    return;
+  }
+  if (!user) return;
 
-  const handlePublish = async () => {
-    if (!crop || !quantity || !price || !district) {
-      setError(t.errMissing[lang]);
-      return;
-    }
-    if (!user) return;
+  setPublishing(true);
+  setError('');
 
-    setPublishing(true);
-    setError('');
-
-    try {
-      let photoUrl = '';
-      if (photo) {
-        const url = await uploadPhoto();
-        if (url) photoUrl = url;
+  try {
+    let photoUrl = '';
+    if (photo) {
+      const url = await uploadPhoto();
+      if (!url) {
+        // Agar photo upload fail hua toh publish process yahin rok do
+        throw new Error('UPLOAD_FAILED');
       }
-
-      const { error: insertError } = await supabase.from('listings').insert({
-        user_id: user.id, crop, quantity: Number(quantity), unit: UNIT,
-        expected_price: Number(price), ready_date: readyDate || null,
-        description: note || null, photos: photoUrl ? [photoUrl] : [],
-        village: village || null, district, state: 'Gujarat', status: 'active',
-      });
-
-      if (insertError) throw insertError;
-      setPublished(true);
-    } catch (err: any) {
-      setError(err?.message || t.errPublish[lang]);
-    } finally {
-      setPublishing(false);
+      photoUrl = url;
     }
-  };
+
+    const { error: insertError } = await supabase.from('listings').insert({
+      user_id: user.id, crop, quantity: Number(quantity), unit: UNIT,
+      expected_price: Number(price), ready_date: readyDate || null,
+      description: note || null, photos: photoUrl ? [photoUrl] : [],
+      village: village || null, district, state: 'Gujarat', status: 'active',
+    });
+
+    if (insertError) throw insertError;
+    setPublished(true);
+  } catch (err: any) {
+    // Agar upload hi fail hua hai toh wahi error dikhao
+    if (err?.message === 'UPLOAD_FAILED') {
+      return; 
+    }
+    
+    const msg = err?.message || '';
+    
+    // Raw DB Error ko translate karo (Case-insensitive)
+    if (msg.toLowerCase().includes('10 active listings')) {
+      setError(lang === 'gu' ? 'તમારી 10 એક્ટિવ લિસ્ટિંગ થઈ ગઈ છે. પહેલા કોઈ લિસ્ટિંગ વેચો અથવા ડિલીટ કરો.' : lang === 'hi' ? 'आपकी 10 सक्रिय लिस्टिंग हो गई हैं। पहले कोई लिस्टिंग बेचें या डिलीट करें।' : 'Aapki 10 active listings ho chuki hain. Pehle koi listing bechein ya delete karein.');
+    } else if (msg.toLowerCase().includes('duplicate')) {
+      setError(lang === 'gu' ? 'આ લિસ્ટિંગ પહેલેથી જ એક્ટિવ છે. ડુપ્લિકેટ લિસ્ટિંગ માન્ય નથી.' : lang === 'hi' ? 'यह लिस्टिंग पहले से ही सक्रिय है। डुप्लिकेट लिस्टिंग मान्य नहीं है।' : 'Ye listing already active hai. Duplicate listing allowed nahi hai.');
+    } else if (msg.toLowerCase().includes('row-level security')) {
+      setError(lang === 'gu' ? 'તમને આની પરવાનગી નથી.' : lang === 'hi' ? 'आपको इसकी अनुमति नहीं है।' : 'Aapko iski permission nahi hai.');
+    } else {
+      setError(t.errPublish[lang]);
+    }
+  } finally {
+    setPublishing(false);
+  }
+};
 
   const resetForm = () => {
     setCrop(''); setQuantity(''); setPrice(''); setReadyDate('');
