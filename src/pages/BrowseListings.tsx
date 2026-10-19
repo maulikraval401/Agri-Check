@@ -421,13 +421,16 @@ export default function BrowseListingsPage() {
                   ) : null}
                   
                   {!isOwnListing && (
-                    <div className="flex items-center gap-1 ml-2">
-                      <button 
-                        onClick={() => setRatingListing(listing)} 
-                        className="rounded bg-[hsl(var(--muted))] px-1.5 py-0.5 text-[10px] font-bold text-[hsl(var(--foreground))] hover:bg-[hsl(var(--border))]"
-                      >
-                        {t.rateSeller[lang]}
-                      </button>
+  <div className="flex items-center gap-1 ml-2">
+    {/* Sirf tab dikhega jab contact kiya ho */}
+    {isContacted && (
+      <button 
+        onClick={() => setRatingListing(listing)} 
+        className="rounded bg-[hsl(var(--muted))] px-1.5 py-0.5 text-[10px] font-bold text-[hsl(var(--foreground))] hover:bg-[hsl(var(--border))]"
+      >
+        {t.rateSeller[lang]}
+      </button>
+    )}
                       <button 
                         onClick={() => setReportListing(listing)} 
                         className="rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-bold text-red-600 hover:bg-red-100 flex items-center gap-0.5"
