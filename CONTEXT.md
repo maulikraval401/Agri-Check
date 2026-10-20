@@ -3,30 +3,31 @@
 ## Tech Stack
 - Frontend: React + TypeScript + Vite + Tailwind CSS v4, Wouter (routing)
 - Backend: Supabase (PostgreSQL) + Vercel (hosting)
-- State: LocalStorage (contacted listings, etc.)
+- State: LocalStorage (contacted listings)
 - Languages: 6 (en, gu, hi, mr, pa, ta)
 
-## Database & Security Status (Fixed)
-- Tables: `users`, `listings`, `interests` (RLS Enabled).
-- Security: anon role write revoked; RPCs have rate-limit & expiry checks.
-- RPCs: `get_listing_contact`, `get_listing_interests`, `get_browse_listings`, `renew_listing`, `delete_my_account`.
-- Phone Format: DB stores 12-digits with `91` prefix (e.g., 919876543210).
-- Storage: `listing-photos` (Public, 5MB limit, jpeg/png/webp only).
+## Security & Database (100% Fixed)
+- RLS enabled. `anon` write revoked.
+- `get_browse_listings` RPC (handles pagination & search).
+- `delete_my_account` RPC (cleans auth & storage).
+- Phone format normalized (DB has 12-digit with 91).
+- `ratings` & `reports` tables active with RLS.
+- **Rules:** No fake ratings (requires contact first), No duplicate listings, Rate limited.
+- Photo upload strips EXIF/GPS via Canvas.
 
-## ✅ P0 & P1 Issues (All FIXED)
-- WhatsApp `9191` duplicate bug fixed in MyListings/Browse.
-- Photo EXIF/GPS location leak fixed (Canvas resize).
-- Account delete complete (Auth + Storage cleanup).
-- Marathi typo in SellCrop fixed.
-- Login return path, Consent timestamp, Raw DB error translations fixed.
-- Duplicate listing spam block localized.
+## ✅ Completed Features
+- **Marketplace:** Sell, Browse, Contact via WhatsApp (9191 bug fixed), MyListings, Sold/Renew.
+- **Trust & Safety:** 5-Star Rating System, Report Button (Fake/Spam).
+- **Mandi:** Grouped by Crop (Average) + Show All toggle.
+- **Auth:** Login redirect validation, DPDP Consent Checkbox with DB Timestamp.
+- **Misc:** 6 Languages fully mapped, Raw DB errors localized, Pagination added.
 
-## 🚧 P2 (Low Priority / Next Phase)
-1. **Report Button** (Flag inappropriate listings).
-2. **Rating System** (Seller/Buyer ratings).
-3. **MSG91 Integration** (Production OTP - replacing test numbers).
+## 🚧 Final Pending (Pre-Launch)
+1. **MSG91 Integration:** Switch Supabase Auth from Test OTP to real SMS. Enable CAPTCHA to prevent SMS pumping.
+2. **Native Speaker Review:** Verify Marathi, Punjabi, Tamil translations.
+3. **Testing:** Run full end-to-end test on real mobile devices.
 
-## 🤖 AI Rules (For future context)
+## 🤖 AI Rules
 - Language: Hindi/Gujarati mix.
-- Code: Always provide full file code blocks.
-- Workflow: One task at a time, ask for commit + deploy + screenshot.
+- Code: Full file code blocks.
+- Workflow: One task per turn, commit -> deploy -> screenshot.
