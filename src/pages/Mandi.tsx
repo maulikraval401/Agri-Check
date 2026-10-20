@@ -1,14 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'wouter';
 import { ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { fetchMandiPrices, type MandiPrice } from '@/lib/mandi';
 import { translateCommodity } from '@/lib/commodity-translations';
 
+type GroupedPrice = {
+  commodity: string;
+  category: string;
+  date: string;
+  avgModal: number;
+  avgMin: number;
+  avgMax: number;
+  marketCount: number;
+};
+
 export default function MandiPage() {
   const { copy, language } = useLanguage();
   const [prices, setPrices] = useState<MandiPrice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'grouped' | 'all'>('grouped');
 
   useEffect(() => {
     fetchMandiPrices()
@@ -16,8 +27,48 @@ export default function MandiPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Data ko faslon ke hisaab se group karne ka logic
+  const groupedPrices = useMemo(() => {
+    const map = new Map<string, { 
+      commodity: string; category: string; date: string; 
+      modalSum: number; minSum: number; maxSum: number; count: number 
+    }>();
+
+    prices.forEach(p => {
+      const existing = map.get(p.commodity);
+      if (existing) {
+        existing.modalSum += p.modalPrice;
+        existing.minSum += p.minPrice;
+        existing.maxSum += p.maxPrice;
+        existing.count += 1;
+      } else {
+        map.set(p.commodity, {
+          commodity: p.commodity,
+          category: p.category,
+          date: p.date,
+          modalSum: p.modalPrice,
+          minSum: p.minPrice,
+          maxSum: p.maxPrice,
+          count: 1,
+        });
+      }
+    });
+
+    return Array.from(map.values()).map(g => ({
+      commodity: g.commodity,
+      category: g.category,
+      date: g.date,
+      avgModal: Math.round(g.modalSum / g.count),
+      avgMin: Math.round(g.minSum / g.count),
+      avgMax: Math.round(g.maxSum / g.count),
+      marketCount: g.count
+    })).sort((a, b) => a.commodity.localeCompare(b.commodity));
+  }, [prices]);
+
+  const currentData = viewMode === 'grouped' ? groupedPrices : prices;
+
   return (
-    <div className="page-enter">
+    <div className="page-enter pb-24">
       <p className="eyebrow">06 / mandi</p>
       <h1 className="mt-2 text-3xl font-bold tracking-[-.05em]">{copy.mandi}</h1>
       <p className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
@@ -101,42 +152,102 @@ export default function MandiPage() {
                 : '🌾 Cotton, Groundnut, Wheat — arriving Oct-Dec'}
           </div>
 
-          <div className="mt-6 grid gap-3">
-            {prices.map((p, i) => (
-              <div
-                key={`${p.commodity}-${p.market}-${i}`}
-                className="rounded-xl border border-[hsl(var(--card-border))] bg-[hsl(var(--card))] p-4"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-bold">
-                        {translateCommodity(p.commodity, language)}
-                      </h3>
-                      <span
-                        className={`rounded-md px-2 py-0.5 text-[.6rem] font-bold ${
-                          p.category === 'crop'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-orange-100 text-orange-800'
-                        }`}
-                      >
-                        {p.category === 'crop' ? '🌾' : '🥬'}
-                      </span>
+          {/* Toggle Button */}
+          <div className="mt-4 flex rounded-lg bg-[hsl(var(--muted))] p-1">
+            <button
+              onClick={() => setViewMode('grouped')}
+              className={`flex-1 rounded-md py-1.5 text-xs font-bold transition-colors ${
+                viewMode === 'grouped' ? 'bg-white shadow-sm text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'
+              }`}
+            >
+              Group by Crop (Average)
+            </button>
+            <button
+              onClick={() => setViewMode('all')}
+              className={`flex-1 rounded-md py-1.5 text-xs font-bold transition-colors ${
+                viewMode === 'all' ? 'bg-white shadow-sm text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'
+              }`}
+            >
+              Show All Mandis
+            </button>
+          </div>
+
+          <div className="mt-4 grid gap-3">
+            {viewMode === 'grouped' ? (
+              // Grouped View
+              groupedPrices.map((p) => (
+                <div
+                  key={p.commodity}
+                  className="rounded-xl border border-[hsl(var(--card-border))] bg-[hsl(var(--card))] p-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold">
+                          {translateCommodity(p.commodity, language)}
+                        </h3>
+                        <span
+                          className={`rounded-md px-2 py-0.5 text-[.6rem] font-bold ${
+                            p.category === 'crop'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-orange-100 text-orange-800'
+                          }`}
+                        >
+                          {p.category === 'crop' ? '🌾' : '🥬'}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">
+                        {p.marketCount} mandiyo ka average · {p.date}
+                      </p>
                     </div>
-                    <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">
-                      {p.market} · {p.date}
-                    </p>
+                    <div className="ml-3 text-right">
+                      <p className="text-xl font-bold">₹{p.avgModal}</p>
+                      <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Avg Modal</p>
+                    </div>
                   </div>
-                  <p className="ml-3 text-xl font-bold">₹{p.modalPrice}</p>
+                  <p className="mt-2 text-xs text-[hsl(var(--muted-foreground))]">
+                    Avg Min ₹{p.avgMin} · Avg Max ₹{p.avgMax}
+                  </p>
                 </div>
-                <p className="mt-2 text-xs text-[hsl(var(--muted-foreground))]">
-                  Min ₹{p.minPrice} · Max ₹{p.maxPrice}
-                </p>
-              </div>
-            ))}
+              ))
+            ) : (
+              // Detailed View (All Mandis)
+              prices.map((p, i) => (
+                <div
+                  key={`${p.commodity}-${p.market}-${i}`}
+                  className="rounded-xl border border-[hsl(var(--card-border))] bg-[hsl(var(--card))] p-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold">
+                          {translateCommodity(p.commodity, language)}
+                        </h3>
+                        <span
+                          className={`rounded-md px-2 py-0.5 text-[.6rem] font-bold ${
+                            p.category === 'crop'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-orange-100 text-orange-800'
+                          }`}
+                        >
+                          {p.category === 'crop' ? '🌾' : '🥬'}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">
+                        {p.market} · {p.date}
+                      </p>
+                    </div>
+                    <p className="ml-3 text-xl font-bold">₹{p.modalPrice}</p>
+                  </div>
+                  <p className="mt-2 text-xs text-[hsl(var(--muted-foreground))]">
+                    Min ₹{p.minPrice} · Max ₹{p.maxPrice}
+                  </p>
+                </div>
+              ))
+            )}
           </div>
         </>
       )}
     </div>
   );
-                }
+      }
