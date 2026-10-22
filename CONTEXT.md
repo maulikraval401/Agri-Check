@@ -8,7 +8,7 @@
 
 ## Security & DB Status (100% SECURE & LAUNCH-READY)
 - RLS enabled, anon write revoked.
-- Supabase Test OTP restricted to specific number only (`918200432653=123456`).
+- Supabase Test OTP restricted to specific number only 
 - Phone formats normalized (12-digit with 91 prefix).
 - EXIF/GPS stripped from photos via Canvas.
 - Fake ratings blocked (User must contact seller first in `interests`).
