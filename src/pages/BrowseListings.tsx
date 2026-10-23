@@ -359,7 +359,7 @@ export default function BrowseListingsPage() {
       <p className="eyebrow mt-4">09 / listings</p>
       <h1 className="mt-2 text-2xl font-bold tracking-tight">🛒 {t.title[lang]}</h1>
       <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
-        {listings.length} {t.found[lang]} {hasMore && '+'}
+        {listings.length} {t.found[lang]} {!error && hasMore && '+'}
       </p>
 
       {/* Filters */}
