@@ -972,9 +972,7 @@ function AppContent() {
     theme.setAttribute('content', '#24544f');
     document.head.appendChild(theme);
 
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => undefined);
-    }
+    
   }, []);
 
   useEffect(() => {
@@ -1167,9 +1165,6 @@ function AppContent() {
           <Route path="/dashboard">
               <FarmDashboard />
             </Route>
-          <Route path="/cotton-debug">
-            <CottonDebug />
-          </Route>
           <Route path="/">
             
             {location === '/' && step === 'home' && showChooser ? (
