@@ -35,3 +35,8 @@
 - Language: Hindi/Gujarati mix.
 - Code: Full file code blocks.
 - Workflow: One task per turn, commit -> deploy -> screenshot.
+## Latest Features Added (Live)
+- **Edit Listing:** update_listing_details RPC & UI Modal.
+- **WhatsApp Share:** Share button in MyListings.
+- **Mandi Alerts:** mandi_alerts table + UI (Bell icon) with target price.
+- **MyFarm Fixes:** Land area now accepts decimals (2, 3, 1.5), crops list expanded to 15 crops.
