@@ -57,10 +57,21 @@ export const SOIL_OPTIONS: { value: SoilType; label: string }[] = [
   { value: 'clay', label: 'Clay (ચીકણી)' },
 ];
 
+// --- NAYE CROPS ADD KIYE HAIN ---
 export const CROP_OPTIONS = [
   { value: 'cotton', label: 'Cotton (કપાસ)', emoji: '🌿' },
   { value: 'groundnut', label: 'Groundnut (મગફળી)', emoji: '🥜' },
   { value: 'wheat', label: 'Wheat (ઘઉં)', emoji: '🌾' },
   { value: 'bajra', label: 'Bajra (બાજરી)', emoji: '🌾' },
   { value: 'cumin', label: 'Cumin (જીરું)', emoji: '🌱' },
+  { value: 'mustard', label: 'Mustard (રાઈ)', emoji: '🌼' },
+  { value: 'sesame', label: 'Sesame (તલ)', emoji: '⚪' },
+  { value: 'sugarcane', label: 'Sugarcane (શેરડી)', emoji: '🎋' },
+  { value: 'moong', label: 'Moong (મગ)', emoji: '🫘' },
+  { value: 'urad', label: 'Urad (અદદ)', emoji: '🫘' },
+  { value: 'rice', label: 'Rice (ચોખા)', emoji: '🌾' },
+  { value: 'onion', label: 'Onion (ડુંગળી)', emoji: '🧅' },
+  { value: 'potato', label: 'Potato (બટાકા)', emoji: '🥔' },
+  { value: 'tomato', label: 'Tomato (ટામેટા)', emoji: '🍅' },
+  { value: 'chilli', label: 'Chilli (મરચું)', emoji: '🌶️' },
 ];
