@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
-import { Loader2, Eye, Phone, Trash2, CheckCircle, RotateCcw, AlertCircle, Plus, ChevronDown, ChevronUp, MapPin, MessageCircle, ArrowLeft, RefreshCw, Edit3, X } from 'lucide-react';
+import { Loader2, Eye, Phone, Trash2, CheckCircle, RotateCcw, AlertCircle, Plus, ChevronDown, ChevronUp, MapPin, MessageCircle, ArrowLeft, RefreshCw, Edit3, X, Share2 } from 'lucide-react';
 import { supabase, type Listing } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -59,6 +59,7 @@ export default function MyListingsPage() {
     delete: { en: 'Delete', gu: 'ડિલીટ કરો', hi: 'डिलीट करें', mr: 'हटवा', pa: 'ਮਿਟਾਓ', ta: 'நீக்கு' },
     deleting: { en: 'Deleting...', gu: 'ડિલીટ થઈ રહ્યું છે...', hi: 'डिलीट हो रहा है...', mr: 'हटवत आहे...', pa: 'ਮਿਟਾਇਆ ਜਾ ਰਿਹਾ ਹੈ...', ta: 'நீக்குகிறது...' },
     edit: { en: 'Edit', gu: 'સુધારો', hi: 'एडिट करें', mr: 'संपादित करा', pa: 'ਸੋਧੋ', ta: 'திருத்து' },
+    share: { en: 'Share', gu: 'શેર કરો', hi: 'शेयर करें', mr: 'शेअर करा', pa: 'ਸ਼ੇਅਰ ਕਰੋ', ta: 'பங்கு' },
     save: { en: 'Save Changes', gu: 'સેવ કરો', hi: 'सेव करें', mr: 'जतन करा', pa: 'ਸੇਵ ਕਰੋ', ta: 'சேமி' },
     cancel: { en: 'Cancel', gu: 'કેન્સલ', hi: 'कैंसल', mr: 'रद्द करा', pa: 'ਰੱਦ ਕਰੋ', ta: 'ரத்து' }
   };
@@ -153,7 +154,7 @@ export default function MyListingsPage() {
     } finally { setDeleting(null); }
   };
 
-  // EDIT FUNCTION
+  // EDIT FUNCTIONS
   const handleEditClick = (listing: Listing) => {
     setEditingListing(listing);
     setEditForm({
@@ -177,7 +178,6 @@ export default function MyListingsPage() {
       });
       if (rpcError) throw rpcError;
       
-      // Update UI
       setListings(prev => prev.map(l => l.id === editingListing.id ? { 
         ...l, crop: editForm.crop, quantity: Number(editForm.quantity), expected_price: Number(editForm.price), description: editForm.desc, district: editForm.district, village: editForm.village
       } : l));
@@ -186,6 +186,13 @@ export default function MyListingsPage() {
     } catch (err: any) {
       setError(err?.message || 'Edit nahi hua');
     } finally { setUpdating(false); }
+  };
+
+  // SHARE FUNCTION
+  const shareOnWhatsApp = (listing: Listing) => {
+    const appUrl = window.location.origin;
+    const message = `🌾 *${listing.crop}* bechna hai\n\n📦 Matra: ${listing.quantity} quintal\n💰 Bhav: ₹${listing.expected_price}/quintal\n📍 Jagah: ${listing.village ? listing.village + ', ' : ''}${listing.district}\n\nMujhse sampark karne ke liye Agri Check app kholo:\n${appUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   const contactBuyer = (buyer: InterestedBuyer, crop: string) => {
@@ -288,8 +295,8 @@ export default function MyListingsPage() {
                   </div>
                 )}
 
-                {/* Actions Grid (3 Columns: Sold/Renew, Edit, Delete) */}
-                <div className="mt-3 grid grid-cols-3 gap-2">
+                {/* Actions Grid (2x2) */}
+                <div className="mt-3 grid grid-cols-2 gap-2">
                   {isExpired && listing.status !== 'sold' ? (
                     <button onClick={() => handleRenew(listing.id)} disabled={renewing === listing.id} className="flex min-h-11 items-center justify-center gap-1 rounded-xl bg-orange-600 text-xs font-bold text-white disabled:opacity-50">
                       {renewing === listing.id ? <Loader2 className="animate-spin" size={14} /> : <RefreshCw size={14} />} {t.renewBtn[lang]}
@@ -302,6 +309,10 @@ export default function MyListingsPage() {
                   
                   <button onClick={() => handleEditClick(listing)} className="flex min-h-11 items-center justify-center gap-1 rounded-xl bg-blue-50 text-xs font-bold text-blue-700 hover:bg-blue-100">
                     <Edit3 size={14} /> {t.edit[lang]}
+                  </button>
+
+                  <button onClick={() => shareOnWhatsApp(listing)} className="flex min-h-11 items-center justify-center gap-1 rounded-xl bg-[#25D366] text-xs font-bold text-white hover:bg-[#1ebd59]">
+                    <Share2 size={14} /> {t.share[lang]}
                   </button>
 
                   <button onClick={() => handleDelete(listing.id)} disabled={deleting === listing.id} className="flex min-h-11 items-center justify-center gap-1 rounded-xl bg-red-50 text-xs font-bold text-red-600 disabled:opacity-50">
@@ -366,4 +377,4 @@ export default function MyListingsPage() {
 
     </div>
   );
-                        }
+                      }
