@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'wouter';
-import { useLocation } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import {
@@ -19,19 +18,15 @@ export default function MyFarm() {
   const { language } = useLanguage();
   const existing = readFarm();
   const [, setLocation] = useLocation();
+  
   const [name, setName] = useState(existing?.name || '');
   const [village, setVillage] = useState(existing?.village || '');
   const [crops, setCrops] = useState<string[]>(existing?.crops || []);
-  const [landArea, setLandArea] = useState(existing?.landArea || 1);
-  const [irrigation, setIrrigation] = useState<IrrigationType>(
-    existing?.irrigation || 'drip',
-  );
-  const [soilType, setSoilType] = useState<SoilType>(
-    existing?.soilType || 'black',
-  );
-  const [sowingDate, setSowingDate] = useState(
-    existing?.sowingDate || new Date().toISOString().split('T')[0],
-  );
+  // FIX 1: LandArea ko string banaya taaki 2, 3 type karte waqt block na ho
+  const [landArea, setLandArea] = useState<string>(String(existing?.landArea || 1));
+  const [irrigation, setIrrigation] = useState<IrrigationType>(existing?.irrigation || 'drip');
+  const [soilType, setSoilType] = useState<SoilType>(existing?.soilType || 'black');
+  const [sowingDate, setSowingDate] = useState(existing?.sowingDate || new Date().toISOString().split('T')[0]);
   const [saved, setSaved] = useState(false);
 
   const toggleCrop = (value: string) => {
@@ -54,7 +49,8 @@ export default function MyFarm() {
       name: name.trim(),
       village: village.trim(),
       crops,
-      landArea,
+      // FIX 2: Yahan string ko wapas number me convert kiya
+      landArea: parseFloat(landArea) || 1,
       irrigation,
       soilType,
       sowingDate,
@@ -65,7 +61,7 @@ export default function MyFarm() {
     if (ok) {
       setSaved(true);
       setTimeout(() => {
-  setLocation('/dashboard');
+        setLocation('/dashboard');
       }, 800);
       setTimeout(() => setSaved(false), 2000);
     } else {
@@ -79,7 +75,7 @@ export default function MyFarm() {
     setName('');
     setVillage('');
     setCrops([]);
-    setLandArea(1);
+    setLandArea('1'); // FIX 3: Reset me string '1' pass kiya
     setIrrigation('drip');
     setSoilType('black');
     setSowingDate(new Date().toISOString().split('T')[0]);
@@ -87,10 +83,7 @@ export default function MyFarm() {
 
   return (
     <div className="page-enter">
-      <Link
-        href="/"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-[hsl(var(--primary))] no-underline"
-      >
+      <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-[hsl(var(--primary))] no-underline">
         <ArrowLeft size={16} /> Back
       </Link>
 
@@ -161,7 +154,7 @@ export default function MyFarm() {
             min="0.1"
             step="0.1"
             value={landArea}
-            onChange={(e) => setLandArea(parseFloat(e.target.value) || 1)}
+            onChange={(e) => setLandArea(e.target.value)} // FIX 4: Direct value save
             className="min-h-12 w-full rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-4 text-sm"
           />
         </div>
@@ -217,13 +210,13 @@ export default function MyFarm() {
       {/* Actions */}
       <div className="mt-6 grid gap-3">
       {existing && (
-  <Link
-    href="/dashboard"
-    className="flex min-h-14 items-center justify-center gap-2 rounded-xl bg-[hsl(var(--secondary))] text-sm font-bold text-[hsl(var(--secondary-foreground))] no-underline"
-  >
-    🌅 View My Dashboard
-  </Link>
-)}
+        <Link
+          href="/dashboard"
+          className="flex min-h-14 items-center justify-center gap-2 rounded-xl bg-[hsl(var(--secondary))] text-sm font-bold text-[hsl(var(--secondary-foreground))] no-underline"
+        >
+          🌅 View My Dashboard
+        </Link>
+      )}
         
         <button
           type="button"
@@ -246,4 +239,4 @@ export default function MyFarm() {
       </div>
     </div>
   );
-                }
+}
