@@ -13,7 +13,6 @@ import {
   getWarningText,
   getNoticeText
 } from '@/lib/fertilizer';
-import { speak } from '@/lib/voice';
 
 export default function CalculatorPage() {
   const { copy, language } = useLanguage();
@@ -68,11 +67,6 @@ export default function CalculatorPage() {
       </div>
     </div>
   );
-
-  const handleSpeak = () => {
-    const msg = `Urea ${result.urea} kg, DAP ${result.dap} kg, MOP ${result.mop} kg. Total kharcha ${result.totalCost} rupees.`;
-    speak(msg, language);
-  };
 
   return (
     <div className="page-enter pb-24">
@@ -181,15 +175,19 @@ export default function CalculatorPage() {
                 {getNoticeText(result.notice, language)}
               </div>
             )}
-
-            <button
-              onClick={handleSpeak}
-              className="mt-4 min-h-11 w-full rounded-xl border border-[hsl(var(--border))] text-sm font-bold"
-            >
-              🔊 {copy.calculatorListen}
-            </button>
           </>
         )}
+
+        {/* 6-Language Disclaimer */}
+        <div className="mt-3 rounded-lg bg-gray-100 p-3 text-[10px] text-gray-600 leading-tight">
+          <p className="font-bold mb-1">⚠️ Disclaimer:</p>
+          {language === 'gu' && <p>આ ખાતરની ભલામણ અંદાજિત છે. ખાતર આપતા પહેલા તમારા સ્થાનિક KVK અથવા કૃષિ નિષ્ણાતની સલાહ લો. Agri Check નિષ્ણાત કૃષિ સલાહનો વિકલ્પ નથી.</p>}
+          {language === 'hi' && <p>यह उर्वरक सलाह अनुमानित है। खाद डालने से पहले अपने स्थानीय KVK या कृषि विशेषज्ञ से सलाह लें। Agri Check विशेषज्ञ सलाह का विकल्प नहीं है।</p>}
+          {language === 'mr' && <p>ही खताची शिफारस अंदाजित आहे. खत देण्यापूर्वी तुमच्या स्थानिक KVK किंवा कृषी तज्ज्ञांचा सल्ला घ्या. Agri Check हा तज्ज्ञ सल्ल्याचा पर्याय नाही.</p>}
+          {language === 'pa' && <p>ਇਹ ਖਾਦ ਦੀ ਸਿਫ਼ਾਰਸ਼ ਅੰਦਾਜ਼ਨ ਹੈ। ਖਾਦ ਪਾਉਣ ਤੋਂ ਪਹਿਲਾਂ ਆਪਣੇ ਸਥਾਨਕ KVK ਜਾਂ ਖੇਤੀਬਾੜੀ ਮਾਹਿਰ ਦੀ ਸਲਾਹ ਲਓ। Agri Check ਮਾਹਿਰ ਸਲਾਹ ਦਾ ਬਦਲ ਨਹੀਂ ਹੈ।</p>}
+          {language === 'ta' && <p>இந்த உர பரிந்துரை மதிப்பீடு ஆகும். உரம் இடும் முன் உங்கள் உள்ளூர் KVK அல்லது வேளாண் நிபுணரை அணுகவும். Agri Check நிபுணர் ஆலோசனைக்கு மாற்றாகாது.</p>}
+          {(language === 'en' || !['gu','hi','mr','pa','ta'].includes(language)) && <p>This fertilizer recommendation is an estimate. Consult your local KVK or agriculture expert before applying. Agri Check does not replace professional advice.</p>}
+        </div>
       </div>
       
       {/* Other Calculators */}
@@ -239,4 +237,4 @@ export default function CalculatorPage() {
       </div>
     </div>
   );
-}
+        }
