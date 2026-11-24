@@ -1,28 +1,26 @@
 // Vercel serverless function: POST /api/assistant
-const TARGETS = ['fertilizer', 'disease', 'weather', 'mandi', 'none'] as const;
+const VALID_PATHS = ['/calculator', '/disease', '/weather', '/mandi'];
 const CROPS = ['cotton', 'groundnut', 'wheat', 'bajra', 'cumin'] as const;
 
 const SYSTEM = `You are a helpful farming assistant for Indian farmers. Answer their questions in their language (Hindi, Gujarati, Marathi, Punjabi, Tamil, or English).
 
 STRICT SAFETY RULES (never break these):
-1. NEVER give exact fertilizer doses (like "daalo 50 kg urea"). Instead say "Calculator me jaakar sahi dose dekhein" and set action=navigate path=/calculator.
-2. NEVER give pesticide/medicine doses. Always say "KVK ya agriculture officer se poochhein".
-3. For mandi prices, weather, or diseases: set action=navigate to the right page.
-4. For general knowledge (what is urea, how to compost, what is crop rotation): answer directly with action=answer.
-5. Keep answers short (2-4 sentences max). Use simple words a farmer understands.
-6. If unsure, say "Main nahi jaanta, apne KVK se poochhein".
+1. NEVER give exact fertilizer doses or pesticide doses. 
+2. If the user asks about doses, mandi prices, weather, or crop diseases: you MUST set action="navigate" and provide the correct path.
+3. For general knowledge questions (what is urea, how to make compost): you can answer directly with action="answer".
+4. Keep answers short (2-4 sentences max).
 
 Respond ONLY with valid JSON (no markdown, no backticks):
 {"action":"answer"|"navigate"|"none","reply":"Your reply in user's language","path":"/calculator"|"/disease"|"/mandi"|"/weather"|null,"crop":"cotton"|"groundnut"|"wheat"|"bajra"|"cumin"|null}
 
-Example 1 - User: "Mere kapas me kitni urea daalu?" 
-{"action":"navigate","reply":"Sahi dose ke liye Calculator kholein, wahan fasal aur area daalein.","path":"/calculator","crop":"cotton"}
+Example 1 - User: "Mere cotton me red bug hai kya karu?" 
+{"action":"navigate","reply":"Disease Detection page pe photo daalein, AI rog pehchan lega.","path":"/disease","crop":"cotton"}
 
 Example 2 - User: "Urea kya hota hai?"
 {"action":"answer","reply":"Urea ek khaad hai jisme 46% Nitrogen hota hai. Ye patton ko hara rakhne me madad karti hai.","path":null,"crop":null}
 
-Example 3 - User: "Mere tamatar me keede lag gaye hain"
-{"action":"navigate","reply":"Disease Detection page pe photo daalein, AI rog pehchan lega.","path":"/disease","crop":null}`;
+Example 3 - User: "Aaj mandi bhav kya hai?"
+{"action":"navigate","reply":"Aaj ke mandi bhav dekhne ke liye Mandi page kholein.","path":"/mandi","crop":null}`;
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method' });
@@ -54,7 +52,7 @@ export default async function handler(req: any, res: any) {
   if (!text) return res.status(400).json({ error: 'empty', details: 'Text nahi mila' });
 
   if (text.length < 3 || ['hi', 'hello', 'hey', 'namaste', 'hola'].includes(text.toLowerCase())) {
-    return res.status(200).json({ action: 'none', reply: "Namaste! Kheti ke baare me kuch bhi poochhein — khaad, rog, mandi bhav, ya mausam.", path: null, crop: null });
+    return res.status(200).json({ action: 'answer', reply: "Namaste! Kheti ke baare me kuch bhi poochhein — khaad, rog, mandi bhav, ya mausam.", path: null, crop: null });
   }
 
   try {
@@ -63,8 +61,9 @@ export default async function handler(req: any, res: any) {
       headers: { Authorization: `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
-        temperature: 0.3,
-        max_tokens: 250,
+        temperature: 0,
+        max_tokens: 600, // Increased to prevent truncation
+        response_format: { type: "json_object" }, // Forces valid JSON
         messages: [
           { role: 'system', content: SYSTEM },
           { role: 'user', content: text },
@@ -83,21 +82,17 @@ export default async function handler(req: any, res: any) {
     let out: any = { action: 'none', reply: 'Maaf kijiyega, samajh nahi aaya. Dobara try karein.', path: null, crop: null };
     try {
       const cleaned = rawContent.replace(/```json/g, '').replace(/```/g, '').trim();
-      const firstBrace = cleaned.indexOf('{');
-      const lastBrace = cleaned.lastIndexOf('}');
-      if (firstBrace !== -1 && lastBrace !== -1) {
-        out = JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
-      }
+      out = JSON.parse(cleaned);
     } catch {
       // fallback already set
     }
 
     const action = ['answer', 'navigate', 'none'].includes(out.action) ? out.action : 'none';
-    const path = TARGETS.find((t) => t === out.path) ? out.path : null;
+    const path = VALID_PATHS.includes(out.path) ? out.path : null;
     const crop = CROPS.find((c) => c === out.crop) ?? null;
 
-    return res.status(200).json({ action, reply: String(out.reply || ''), path, crop: path === '/fertilizer' ? crop : null });
+    return res.status(200).json({ action, reply: String(out.reply || ''), path, crop: path === '/calculator' ? crop : null });
   } catch (err: any) {
     return res.status(502).json({ error: 'upstream', details: `Fetch failed: ${err.message}` });
   }
-}
+         }
