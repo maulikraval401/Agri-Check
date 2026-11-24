@@ -16,12 +16,7 @@ const EXTRA: Record<'en' | 'gu' | 'hi' | 'mr' | 'pa' | 'ta', { thinking: string;
 type Lang = 'en' | 'gu' | 'hi' | 'mr' | 'pa' | 'ta';
 type Target = 'fertilizer' | 'disease' | 'weather' | 'mandi';
 
-const ROUTES: Record<Target, string> = {
-  fertilizer: '/calculator',
-  disease: '/disease',
-  weather: '/weather',
-  mandi: '/mandi',
-};
+const ROUTES: Record<Target, string> = { fertilizer: '/calculator', disease: '/disease', weather: '/weather', mandi: '/mandi' };
 
 const KEYWORDS: Record<Target, string[]> = {
   fertilizer: ['khaad', 'khad', 'fertilizer', 'fertiliser', 'urea', 'dap', 'mop', 'npk', 'dose', 'ખાતર', 'યુરિયા', 'खाद', 'खत', 'उर्वरक', 'यूरिया', 'ਖਾਦ', 'ਯੂਰੀਆ', 'உரம்', 'யூரியா'],
@@ -94,7 +89,7 @@ export default function AssistantPage() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (busy) return;
-    setNote(''); setMissed('');
+    setNote(''); setMissed(false);
 
     const local = detect(text);
     if (local.target) { go(local.target, local.crop); return; }
@@ -110,17 +105,23 @@ export default function AssistantPage() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ text }),
       });
-      if (r.status === 429) { setNote(EXTRA[lang].limit); return; }
-      if (!r.ok) { setNote(EXTRA[lang].error); return; }
       
-      const data = await r.json();
+      const data = await r.json().catch(() => ({}));
+
+      if (r.status === 429) { setNote(EXTRA[lang].limit); return; }
+      
+      if (!r.ok) { 
+        setNote(`Error: ${data.error || r.status} - ${data.details || 'Unknown error'}`);
+        return; 
+      }
+      
       if (data.target && data.target !== 'none' && data.target in ROUTES) {
         go(data.target, data.crop);
       } else {
         setMissed(true);
       }
-    } catch {
-      setNote(EXTRA[lang].error);
+    } catch (err: any) {
+      setNote(`Error: ${err.message || 'Network failed'}`);
     } finally {
       setBusy(false);
     }
@@ -138,7 +139,7 @@ export default function AssistantPage() {
           <Search className="ml-2 h-5 w-5 shrink-0 opacity-60" />
           <input
             value={text}
-            onChange={(e) => { setText(e.target.value); setMissed(false); }}
+            onChange={(e) => { setText(e.target.value); setMissed(false); setNote(''); }}
             placeholder={tx.placeholder}
             className="min-h-11 flex-1 bg-transparent text-base outline-none"
           />
@@ -147,7 +148,7 @@ export default function AssistantPage() {
           </button>
         </div>
         {busy && <p className="px-1 text-sm opacity-70">{EXTRA[lang].thinking}</p>}
-        {note && <p className="px-1 text-sm text-[hsl(var(--muted-foreground))]">{note}</p>}
+        {note && <p className="px-1 text-sm text-red-600 font-medium">{note}</p>}
         {missed && <p className="px-1 text-sm text-[hsl(var(--muted-foreground))]">{tx.notFound}</p>}
       </form>
 
@@ -172,4 +173,4 @@ export default function AssistantPage() {
       </section>
     </div>
   );
-    }
+               }
