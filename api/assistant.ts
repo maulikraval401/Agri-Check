@@ -2,17 +2,27 @@
 const TARGETS = ['fertilizer', 'disease', 'weather', 'mandi', 'none'] as const;
 const CROPS = ['cotton', 'groundnut', 'wheat', 'bajra', 'cumin'] as const;
 
-const SYSTEM = `You route a farmer's message in an Indian farming app to one page.
-The message may be in English, Hindi, Gujarati, Marathi, Punjabi, Tamil, or Roman-script mixes.
-Pages:
-- fertilizer: fertilizer, urea, DAP, soil nutrients, how much khaad to apply
-- disease: crop disease, pests, insects, leaf spots, yellowing, wilting
-- weather: weather, rain, temperature
-- mandi: market price, mandi rates, selling price
-- none: anything else, unclear, or not about farming
-Also give "crop" if the message names one of: cotton, groundnut, wheat, bajra, cumin (else null).
-Reply ONLY with a valid JSON object. No markdown, no explanation, no backticks.
-Example: {"target":"disease","crop":"cotton"}`;
+const SYSTEM = `You are a helpful farming assistant for Indian farmers. Answer their questions in their language (Hindi, Gujarati, Marathi, Punjabi, Tamil, or English).
+
+STRICT SAFETY RULES (never break these):
+1. NEVER give exact fertilizer doses (like "daalo 50 kg urea"). Instead say "Calculator me jaakar sahi dose dekhein" and set action=navigate path=/calculator.
+2. NEVER give pesticide/medicine doses. Always say "KVK ya agriculture officer se poochhein".
+3. For mandi prices, weather, or diseases: set action=navigate to the right page.
+4. For general knowledge (what is urea, how to compost, what is crop rotation): answer directly with action=answer.
+5. Keep answers short (2-4 sentences max). Use simple words a farmer understands.
+6. If unsure, say "Main nahi jaanta, apne KVK se poochhein".
+
+Respond ONLY with valid JSON (no markdown, no backticks):
+{"action":"answer"|"navigate"|"none","reply":"Your reply in user's language","path":"/calculator"|"/disease"|"/mandi"|"/weather"|null,"crop":"cotton"|"groundnut"|"wheat"|"bajra"|"cumin"|null}
+
+Example 1 - User: "Mere kapas me kitni urea daalu?" 
+{"action":"navigate","reply":"Sahi dose ke liye Calculator kholein, wahan fasal aur area daalein.","path":"/calculator","crop":"cotton"}
+
+Example 2 - User: "Urea kya hota hai?"
+{"action":"answer","reply":"Urea ek khaad hai jisme 46% Nitrogen hota hai. Ye patton ko hara rakhne me madad karti hai.","path":null,"crop":null}
+
+Example 3 - User: "Mere tamatar me keede lag gaye hain"
+{"action":"navigate","reply":"Disease Detection page pe photo daalein, AI rog pehchan lega.","path":"/disease","crop":null}`;
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method' });
@@ -26,49 +36,35 @@ export default async function handler(req: any, res: any) {
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
   if (!token) return res.status(401).json({ error: 'login', details: 'Token nahi mila' });
 
-  // 1. Verify Supabase Token
   const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
     headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
   });
-  if (!userRes.ok) {
-    return res.status(401).json({ error: 'login', details: `Supabase auth failed: ${userRes.status}` });
-  }
+  if (!userRes.ok) return res.status(401).json({ error: 'login', details: `Auth failed: ${userRes.status}` });
 
-  // 2. Check Daily Limit (RPC)
   const hitRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/assistant_hit`, {
     method: 'POST',
-    headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: '{}',
   });
-  if (!hitRes.ok) {
-    return res.status(500).json({ error: 'limit_check', details: `RPC failed: ${hitRes.status}` });
-  }
-  const hitData = await hitRes.json();
-  if (hitData !== true) return res.status(429).json({ error: 'limit', details: 'Daily limit reached' });
+  if (!hitRes.ok) return res.status(500).json({ error: 'limit_check', details: `RPC failed: ${hitRes.status}` });
+  if ((await hitRes.json()) !== true) return res.status(429).json({ error: 'limit', details: 'Daily limit reached' });
 
-  // 3. Input
   const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-  const text = typeof body?.text === 'string' ? body.text.trim().slice(0, 200) : '';
+  const text = typeof body?.text === 'string' ? body.text.trim().slice(0, 300) : '';
   if (!text) return res.status(400).json({ error: 'empty', details: 'Text nahi mila' });
 
-  // Short non-farming input -> return none immediately
   if (text.length < 3 || ['hi', 'hello', 'hey', 'namaste', 'hola'].includes(text.toLowerCase())) {
-    return res.status(200).json({ target: 'none', crop: null });
+    return res.status(200).json({ action: 'none', reply: "Namaste! Kheti ke baare me kuch bhi poochhein — khaad, rog, mandi bhav, ya mausam.", path: null, crop: null });
   }
 
-  // 4. Call Groq API
   try {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile', // Better JSON mode model
-        temperature: 0,
-        max_tokens: 100, // Increased to avoid truncation
+        model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+        temperature: 0.3,
+        max_tokens: 250,
         messages: [
           { role: 'system', content: SYSTEM },
           { role: 'user', content: text },
@@ -84,8 +80,7 @@ export default async function handler(req: any, res: any) {
     const data = await r.json();
     const rawContent = data.choices?.[0]?.message?.content ?? '';
 
-    // Robust JSON parsing: remove markdown fences, extra text
-    let out: { target?: string; crop?: string | null } = {};
+    let out: any = { action: 'none', reply: 'Maaf kijiyega, samajh nahi aaya. Dobara try karein.', path: null, crop: null };
     try {
       const cleaned = rawContent.replace(/```json/g, '').replace(/```/g, '').trim();
       const firstBrace = cleaned.indexOf('{');
@@ -93,14 +88,15 @@ export default async function handler(req: any, res: any) {
       if (firstBrace !== -1 && lastBrace !== -1) {
         out = JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
       }
-    } catch (parseErr) {
-      // If parsing fails, treat as 'none' instead of throwing an error
-      out = { target: 'none', crop: null };
+    } catch {
+      // fallback already set
     }
 
-    const target = TARGETS.find((t) => t === out?.target) ?? 'none';
-    const crop = CROPS.find((c) => c === out?.crop) ?? null;
-    return res.status(200).json({ target, crop: target === 'fertilizer' ? crop : null });
+    const action = ['answer', 'navigate', 'none'].includes(out.action) ? out.action : 'none';
+    const path = TARGETS.find((t) => t === out.path) ? out.path : null;
+    const crop = CROPS.find((c) => c === out.crop) ?? null;
+
+    return res.status(200).json({ action, reply: String(out.reply || ''), path, crop: path === '/fertilizer' ? crop : null });
   } catch (err: any) {
     return res.status(502).json({ error: 'upstream', details: `Fetch failed: ${err.message}` });
   }
