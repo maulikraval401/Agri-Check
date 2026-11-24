@@ -1109,7 +1109,9 @@ function AppContent() {
           <Route path="/calculator">
             <CalculatorPage />
           </Route>
-          <Route path="/assistant" component={AssistantPage} />
+          <Route path="/assistant">
+            <AssistantPage />
+          </Route>
           <Route path="/weather">
             <WeatherPage />
           </Route>
