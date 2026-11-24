@@ -307,6 +307,7 @@ function BottomNav({ location, onNewTest }: { location: string; onNewTest: () =>
     { href: '/mandi', label: copy.mandi, icon: TrendingUp },
     { href: '/schemes', label: copy.schemes, icon: FileText },
     { href: '/disease', label: 'Disease', icon: Stethoscope },
+    { href: '/assistant', label: 'Assistant', icon: Sparkles },
     { href: '/history', label: copy.history, icon: HistoryIcon },
 ];
   return (
