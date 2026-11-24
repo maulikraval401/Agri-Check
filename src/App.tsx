@@ -43,6 +43,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import NotFound from '@/pages/not-found';
 import CalendarPage from '@/pages/Calendar';
 import CalculatorPage from '@/pages/Calculator';
+import AssistantPage from './pages/Assistant';
 import WeatherPage from '@/pages/Weather';
 import MandiPage from '@/pages/Mandi';
 import SchemesPage from '@/pages/Schemes';
@@ -1108,6 +1109,7 @@ function AppContent() {
           <Route path="/calculator">
             <CalculatorPage />
           </Route>
+          <Route path="/assistant" component={AssistantPage} />
           <Route path="/weather">
             <WeatherPage />
           </Route>
